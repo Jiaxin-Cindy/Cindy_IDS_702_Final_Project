@@ -1,0 +1,111 @@
+---
+title: "Project Proposal"
+author: "ALL group member names here"
+subtitle: "Due November 17 at 11:59pm"
+format: pdf
+---
+
+#### Load Packages
+
+```{r load-packages, message = FALSE, warning = FALSE}
+library(tidyverse)
+```
+
+# Dataset 1 (top choice)
+
+**Data source:** <https://opportunityinsights.org/wp-content/uploads/2023/07/CollegeAdmissions_Codebook.pdf>
+
+<https://opportunityinsights.org/wp-content/uploads/2023/07/CollegeAdmissions_Data.csv>
+
+**Brief description:** The dataset documents college application and attendance rates for students in the U.S. who took the SAT or ACT in 2011, 2013, or 2015. It includes detailed metrics by parental income and selective college tiers, such as Ivy League schools and public flagships.
+
+**Research question 1:**
+
+-   Outcome variable (include the name/description and type of variable):
+    -   **Income vs. Application Rate**: How do application rates to selective colleges vary across parental income bins? Specifically, are students from higher-income families more likely to apply to Ivy-Plus or highly selective colleges compared to students from lower-income families?
+
+**Research question 2:**
+
+-   Outcome variable (include the name/description and type of variable):
+    -   **Income vs. Attendance Rate**: Once students apply, how does parental income impact the relative likelihood of attending a selective college? Do students from lower-income backgrounds have different attendance rates, conditional on application, compared to their higher-income peers?
+
+**Load the data and provide a `glimpse()`**:
+
+```{r data-1, warning=FALSE}
+
+college_data <- read_csv("https://opportunityinsights.org/wp-content/uploads/2023/07/CollegeAdmissions_Data.csv")
+
+glimpse(college_data)
+```
+
+**Exploratory Plots:**
+
+```{r plots-1}
+
+```
+
+# Dataset 2
+
+**Data source:** <https://github.com/fivethirtyeight/data/tree/master/house-forecast-2018>
+
+**Brief description:**
+
+**Research question 1:**
+
+-   Outcome variable (include the name/description and type of variable):
+
+**Research question 2:**
+
+-   Outcome variable (include the name/description and type of variable):
+
+**Load the data and provide a `glimpse()`**:
+
+```{r data-2, warning=FALSE}
+
+```
+
+**Exploratory Plots:**
+
+```{r plots-2}
+
+```
+
+# 
+
+# Dataset 3 (optional)
+
+**Data source:**
+
+**Brief description:**
+
+**Research question 1:**
+
+-   Outcome variable (include the name/description and type of variable):
+
+**Research question 2:**
+
+-   Outcome variable (include the name/description and type of variable):
+
+**Load the data and provide a `glimpse()`**:
+
+```{r data-3, warning=FALSE}
+
+```
+
+**Exploratory Plots:**
+
+```{r plots-3}
+
+```
+
+# 
+
+# Team Charter
+
+#### When will you meet as a team to work on the project components? Will these meetings be held in person or virtually?
+
+#### What is your group policy on missing team meetings (e.g., how much advance notice should be provided)?
+
+#### How will your team communicate (email, Slack, text messages)? What is your policy on appropriate response time (within a certain number of hours? Nights/weekends?)?
+
+#### 
