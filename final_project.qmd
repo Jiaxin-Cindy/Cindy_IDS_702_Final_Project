@@ -12,23 +12,31 @@ execute:
 
 # 1. Abstract
 
+Understanding the factors influencing gender representation in films is essential for addressing disparities in media. This study examines the relationship between movie budgets and their likelihood of passing the Bechdel Test, as well as differences in international box office revenue between movies that pass or fail the test. The modulating effect of decade and genre is also explored for its implications on media representation and industry practices. The dataset analyzed is derived from BechdelTest.com, captured from the ‘fivethirtyeight’ repository on GitHub. Movie genres were applied to the dataset using the IMDb library in Python. Logistic regression was applied to model Bechdel Test outcomes, and linear regression was used to model international box office revenue. A priori variable selection and exploratory data analysis were conducted for variable inclusion. The interaction between inflation-adjusted budget and decade was used to explore changes over time. Genre was included as a covariate when modeling international revenue.
+
+This study provides insights into the economic and cultural dynamics shaping gender representation in the film industry and serves as a reference for stakeholders seeking to promote inclusivity in media production.
 
 # 2. Introduction
 
+Gender representation in media is a critical issue due to its influence on societal norms and perceptions. The Bechdel Test, a measure of whether movies include at least two named women characters who talk to each other about something other than a man, highlights persistent disparities in representation \[1\]. Despite growing awareness, many films continue to fail this basic measure of inclusivity, raising questions about the social and economic factors that contribute to this outcome.
+
+The film industry is a major global enterprise, with Hollywood alone generating over \$100 billion in revenue annually \[2\]. Budget allocations, genre choices, and audience preferences significantly influence the production and success of movies. Previous studies suggest that higher-budget movies often prioritize traditional narratives that may not meet diversity benchmarks like the Bechdel Test \[3\]. Conversely, films that pass the test have demonstrated competitive performance at the box office, particularly in international markets, suggesting that inclusivity can align with financial success \[4\].
+
+Economic and cultural factors, such as inflation-adjusted budgets, genre conventions, and evolving societal norms across decades, may influence gender representation in films. By analyzing a dataset from BechdelTest.com, which includes information on movies’ budgets, box office performance, genres (applied using the IMDb library in Python), and Bechdel Test outcomes, this study seeks to address the following questions:
+
+1.  What is the relationship between a movie’s budget and its likelihood of passing the Bechdel Test? Does this relationship vary across decades?
+
+2.  How does passing the Bechdel Test impact a movie’s international box office revenue, and does this relationship depend on the movie’s genre?
+
+By examining these questions, the study aims to provide insights into the economic and cultural dynamics shaping gender representation in the film industry and contribute to ongoing discussions on inclusivity in media.
 
 # 3. Methods
 
 ### 3.1 Data and Preprocessing
 
-
-
 ### 3.2 Variable Selection
 
-
-
 ### 3.3 Model Fitting and Evaluation
-
-
 
 # 4. Results
 
@@ -36,13 +44,13 @@ execute:
 
 ### 4.2 Research Question 1: Relationship Between the Bechdel Test and Budget
 
-
-
 ### 4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office
-
-
 
 ### 5 Conclusion
 
-
 ### 6. References
+
+1.  Bechdel, A. (1985). Dykes to Watch Out For. *First published as a comic strip in The Essential Dykes to Watch Out For.*
+2.  Motion Picture Association. (2023). *THEME Report: A Comprehensive Analysis of the Global Film Industry.*
+3.  Smith, S. L., Choueiti, M., & Pieper, K. (2022). *Inequality in 1,300 Popular Films: Examining Gender, Race, & Ethnicity.* USC Annenberg Inclusion Initiative.
+4.  Lauzen, M. M. (2021). *The Celluloid Ceiling: Behind-the-Scenes Employment of Women on the Top 250 Films of 2020.* Center for the Study of Women in Television & Film, San Diego State University.
