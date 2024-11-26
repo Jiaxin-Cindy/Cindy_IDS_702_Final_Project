@@ -1,0 +1,48 @@
+---
+title: "Analyzing the Bechdel Test: Budget Trends and Revenue Outcomes in Cinema"
+author: "Alex Ackeman, Cindy Gao, Kayla, Haeussler, Javidan Karimli"
+subtitle: "Insert Date"
+format: pdf
+header-includes:
+      - \usepackage{float}
+      - \floatplacement{table}{H}
+execute:
+  echo: false
+---
+
+# 1. Abstract
+
+
+# 2. Introduction
+
+
+# 3. Methods
+
+### 3.1 Data and Preprocessing
+
+
+
+### 3.2 Variable Selection
+
+
+
+### 3.3 Model Fitting and Evaluation
+
+
+
+# 4. Results
+
+### 4.1 Overview of Included Data
+
+### 4.2 Research Question 1: Relationship Between the Bechdel Test and Budget
+
+
+
+### 4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office
+
+
+
+### 5 Conclusion
+
+
+### 6. References
