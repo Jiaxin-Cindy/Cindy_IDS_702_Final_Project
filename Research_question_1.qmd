@@ -1,0 +1,112 @@
+---
+title: "Research Question 1"
+format: pdf
+editor: visual
+---
+
+```{r}
+# load the raw data, and format all the columns
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+movie_data <- read_csv(
+  "https://raw.githubusercontent.com/ackerman-alex/IDS_702_Final_Project/refs/heads/main/Movies.csv",
+  col_types = cols(
+    imdb = col_character(),           # IMDb identifier
+    title = col_character(),          # Movie title
+    year = col_double(),              # Year of release
+    test = col_character(),           # Original Bechdel Test result
+    clean_test = col_character(),     # Cleaned-up test result
+    binary = col_character(),         # PASS/FAIL outcome
+    budget = col_double(),            # Original budget
+    domgross = col_double(),          # Original domestic gross
+    intgross = col_double(),          # Original international gross
+    code = col_character(),           # Classification code
+    `budget_2013$` = col_double(),    # Inflation-adjusted budget 
+    `domgross_2013$` = col_double(),  # Inflation-adjusted domestic gross
+    `intgross_2013$` = col_double(),  # Inflation-adjusted international gross
+    `period code` = col_double(),     # Period code
+    `decade code` = col_double(),     # Decade code
+    genre = col_character()           # Movie genre
+  )
+)
+
+
+
+# rename the columns to get rid of the space in the names.
+movie_data <- movie_data %>%
+  rename(
+    period_code = `period code`,
+    decade_code = `decade code`
+  )
+
+# removing period code column because idk what it is and also it has a lot of missing values
+movie_data$period_code <- NULL
+
+movie_data
+```
+
+```{r}
+# check for missing values
+colSums(is.na(movie_data))[colSums(is.na(movie_data)) > 0]
+
+```
+
+```{r}
+# check the relationship with variable year and decade code
+
+#ggplot(movie_data, aes(x = year, y = decade_code)) +
+#  geom_point(alpha = 0.5) +
+#  labs(title = "Relationship between Year and Decade Code",
+#       x = "Year",
+#       y = "Decade Code")
+
+movie_data <- movie_data %>%
+  mutate(decade_code = as.numeric(decade_code))
+
+
+# Fill with the missing value: 
+# for movies from 1980-1989 (included), the decade code is 4.
+# for movies from 1970-1979 (included), the decade code is 5.
+
+movie_data <- movie_data %>%
+  mutate(
+    decade_code = case_when(
+      is.na(decade_code) & year >= 1980 & year <= 1989 ~ 4.0,  
+      is.na(decade_code) & year >= 1970 & year <= 1979 ~ 5.0,  
+      TRUE ~ decade_code 
+    )
+  )
+
+```
+
+```{r}
+colSums(is.na(movie_data))[colSums(is.na(movie_data)) > 0]
+nrow(movie_data)
+# Show rows with missing data
+movie_data[rowSums(is.na(movie_data)) > 0, ]
+
+```
+
+```{r}
+# Remove rows with missing data
+movie_data <- na.omit(movie_data)
+nrow(movie_data)
+```
+
+```{r}
+# Factor the response variable and decade code
+movie_data <- movie_data %>%
+  mutate(
+    binary = factor(binary, levels = c("FAIL", "PASS")),
+    decade_code = factor(decade_code)
+  )
+
+```
+
+```{r}
+# Construct the logistic regression model
+glm_model <- glm(binary ~ `budget_2013$` * decade_code, data = movie_data, family = "binomial")
+summary(glm_model)
+```
