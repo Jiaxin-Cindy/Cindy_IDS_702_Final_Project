@@ -1,0 +1,99 @@
+---
+title: "Summary Stats for report"
+format: pdf
+editor: visual
+---
+
+```{r}
+# load the raw data, and format all the columns
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+movie_data <- read_csv(
+  "https://raw.githubusercontent.com/ackerman-alex/IDS_702_Final_Project/refs/heads/main/Movies.csv",
+  col_types = cols(
+    imdb = col_character(),           # IMDb identifier
+    title = col_character(),          # Movie title
+    year = col_double(),              # Year of release
+    test = col_character(),           # Original Bechdel Test result
+    clean_test = col_character(),     # Cleaned-up test result
+    binary = col_character(),         # PASS/FAIL outcome
+    budget = col_double(),            # Original budget
+    domgross = col_double(),          # Original domestic gross
+    intgross = col_double(),          # Original international gross
+    code = col_character(),           # Classification code
+    `budget_2013$` = col_double(),    # Inflation-adjusted budget 
+    `domgross_2013$` = col_double(),  # Inflation-adjusted domestic gross
+    `intgross_2013$` = col_double(),  # Inflation-adjusted international gross
+    `period code` = col_double(),     # Period code
+    `decade code` = col_double(),     # Decade code
+    genre = col_character()           # Movie genre
+  )
+)
+
+
+
+# rename the columns to get rid of the space in the names.
+movie_data <- movie_data %>%
+  rename(
+    period_code = `period code`,
+    decade_code = `decade code`
+  )
+
+movie_data
+```
+
+```{r}
+table(movie_data$binary)
+```
+
+|                             | FAIL | PASS |
+|-----------------------------|------|------|
+| Number of Movies in Dataset | 991  | 803  |
+
+```{r}
+table(movie_data$genre)
+```
+
+```{r}
+# Calculate the summary statistics
+summary_stats <- data.frame(
+  Budget = c(median(movie_data$budget, na.rm = TRUE),
+             quantile(movie_data$budget, 0.25, na.rm = TRUE),
+             quantile(movie_data$budget, 0.75, na.rm = TRUE),
+             mean(movie_data$budget, na.rm = TRUE)),
+  
+  Domestic_Gross = c(median(movie_data$domgross, na.rm = TRUE),
+                     quantile(movie_data$domgross, 0.25, na.rm = TRUE),
+                     quantile(movie_data$domgross, 0.75, na.rm = TRUE),
+                     mean(movie_data$domgross, na.rm = TRUE)),
+  
+  International_Gross = c(median(movie_data$intgross, na.rm = TRUE),
+                          quantile(movie_data$intgross, 0.25, na.rm = TRUE),
+                          quantile(movie_data$intgross, 0.75, na.rm = TRUE),
+                          mean(movie_data$intgross, na.rm = TRUE)),
+  
+  Budget_2013 = c(median(movie_data$`budget_2013$`, na.rm = TRUE),
+                  quantile(movie_data$`budget_2013$`, 0.25, na.rm = TRUE),
+                  quantile(movie_data$`budget_2013$`, 0.75, na.rm = TRUE),
+                  mean(movie_data$`budget_2013$`, na.rm = TRUE)),
+  
+  Domestic_Gross_2013 = c(median(movie_data$`domgross_2013$`, na.rm = TRUE),
+                          quantile(movie_data$`domgross_2013$`, 0.25, na.rm = TRUE),
+                          quantile(movie_data$`domgross_2013$`, 0.75, na.rm = TRUE),
+                          mean(movie_data$`domgross_2013$`, na.rm = TRUE)),
+  
+  International_Gross_2013 = c(median(movie_data$`intgross_2013$`, na.rm = TRUE),
+                               quantile(movie_data$`intgross_2013$`, 0.25, na.rm = TRUE),
+                               quantile(movie_data$`intgross_2013$`, 0.75, na.rm = TRUE),
+                               mean(movie_data$`intgross_2013$`, na.rm = TRUE))
+)
+
+# Set row names
+rownames(summary_stats) <- c("Median", "1st Quartile", "3rd Quartile", "Mean")
+
+# Display the summary statistics
+summary_stats
+
+```
