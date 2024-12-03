@@ -103,9 +103,6 @@ movie_data <- movie_data %>%
     decade_code = factor(decade_code)
   )
 
-# Since this question does not care about the difference between international and domestic gross, we can combine them into a new variable: total gross
-movie_data <- movie_data %>%
-  mutate(total_gross_2013 = `domgross_2013$` + `intgross_2013$`)
 ```
 
 ```{r}
