@@ -1,6 +1,6 @@
 ---
 title: "Analyzing the Bechdel Test: Budget Trends and Revenue Outcomes in Cinema"
-author: "Alex Ackeman, Cindy Gao, Kayla, Haeussler, Javidan Karimli"
+author: "Alex Ackeman, Cindy Gao, Kayla Haeussler, Javidan Karimli"
 subtitle: "Insert Date"
 format: pdf
 header-includes:
@@ -46,22 +46,32 @@ HOW DID WE GET GENRE DATA?
 
 ### 4.1 Overview of Included Data
 
-|                             | FAIL | PASS |
-|-----------------------------|------|------|
-| Number of Movies in Dataset | 991  | 803  |
+After initial data preprocessing, our dataset contains XXXXX rows. Of these XXXX films, 803 of them passed the Bechdel test, while 991 of the films passed the test.
 
 |                             | Action | Comedy | Drama | Family | Horror | Romance | Other |
-|-------------------|--------|--------|--------|--------|--------|--------|--------|
+|---------------------|--------|--------|--------|--------|--------|--------|--------|
 | Number of Movies in Dataset | 483    | 498    | 442   | 23     | 100    | 2       | 246   |
 
-|              | Col2 | Col3 |
-|--------------|------|------|
-| Median       |      |      |
-| 1st Quartile |      |      |
-| 3rd Quartile |      |      |
-| Mean         |      |      |
+Table 1: Summary Statistics of Movie Financial Characteristics in 2013 USD
+
+|   | Budget 2013 | Domestic Gross Revenue 2013 | International Gross Revenue 2013 |
+|----|----|----|----|
+| Median | 36995786 | 55993640 | 96239640 |
+| 1st Quartile | 16068918 | 20546594 | 33232604 |
+| 3rd Quartile | 78337905 | 121678352 | 241478970 |
+| Mean | 55464608 | 95174784 | 197837985 |
 
 ### 4.2 Research Question 1: Relationship Between the Bechdel Test and Budget
+
+The results of the logistic regression model are shown in table 2 below
+
+Table 2: Logistic Regression Model Summary
+
+| Variable | Estimate | Std Error | t-value | p-value |
+|----------|----------|-----------|---------|---------|
+|          |          |           |         |         |
+|          |          |           |         |         |
+|          |          |           |         |         |
 
 ### 4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office
 
