@@ -34,7 +34,7 @@ By examining these questions, the study aims to provide insights into the econom
 
 ### 3.1 Data and Preprocessing
 
-Our dataset was obtained from the fivethirtyeight repository. The dataset contains 1,794 rows and 15 columns, with each row representing a movie and
+Our dataset was obtained from the fivethirtyeight article *The Dollar-And-Cents Case Against Hollywood's Exclusion of Women,* which synthesized Bechdel test result data, from BechdelTest.com, and movie financial metrics, from TheNumbers.com. The dataset contains 1,794 rows and 15 columns, with each row representing a movie, whether or not it passed the Bechdel test, as well as its budget, domestic and international revenue, in release year dollars and adjusted for inflation to 2013 dollars.
 
 HOW DID WE GET GENRE DATA?
 
