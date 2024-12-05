@@ -1,13 +1,11 @@
 ---
 title: "Analyzing the Bechdel Test: Budget Trends and Revenue Outcomes in Cinema"
 author: "Alex Ackeman, Cindy Gao, Kayla Haeussler, Javidan Karimli"
-subtitle: "Insert Date"
+subtitle: "December 15th 2024"
 format: pdf
 header-includes:
       - \usepackage{float}
       - \floatplacement{table}{H}
-execute:
-  echo: false
 ---
 
 # 1. Abstract
@@ -36,20 +34,11 @@ By examining these questions, the study aims to provide insights into the econom
 
 Our dataset was obtained from the fivethirtyeight article *The Dollar-And-Cents Case Against Hollywood's Exclusion of Women,* which synthesized Bechdel test result data, from BechdelTest.com, and movie financial metrics, from TheNumbers.com. The dataset contains 1,794 rows and 15 columns, with each row representing a movie, whether or not it passed the Bechdel test, as well as its budget, domestic and international revenue, both in release year dollars and adjusted for inflation to 2013 dollars.
 
-In addition to the information provided in the original dataset, our team thought it would be interesting to explore movie genre as a variable as well.
+In addition to the information provided in the original dataset, our team thought it would be interesting to explore movie genre as a variable as well. The original dataset includes a column labeled imdb, containing unique identifiers corresponding to movie details available in the IMDb database. To extract and classify movie genres, the PyMovieDb library was utilized. Genres were categorized into seven distinct groups: Comedy, Romance, Action, Horror, Drama, Family, and Other. If a movie’s genre did not align with any of the first six categories, it was automatically assigned to the “Other” category. Given that many movies belong to multiple genres, the classification process prioritized the first match among the predefined categories.
 
-To begin our data processing, we removed the columns for budget, domestic revenue and international revenue which had these amounts in US dollar at time of release, and retained the columns which had these values in 2013 USD values. Our team felt it best to use only the 2013 inflation adjusted columns for each of these values in our analysis to ensure consistent and equitable comparison of financial metrics.
+To begin our data processing, we removed the columns for budget, domestic revenue and international revenue which had these amounts in US dollar at time of release, and retained the columns which had these values in 2013 USD values. Our team felt it best to use only the 2013 inflation adjusted columns for each of these values in our analysis to ensure consistent and equitable comparison of financial metrics. Our initial exploration of the data also revealed missing values in the domestic and international gross revenue (2013) columns, as well as, most notably, the decade code column, which assigns a single digit corresponding to the movie's release decade. There were 179 rows of our data which were missing a decade code value, which we discovered were all films released in the 1970s and 1980s. We edited the data to fill in a '4' and '5' for movies released in the 1980s and 1970s, respectively. As far as data missing in the domestic and gross revenue columns, we could not pin point the exact cause of the data not being available. There were 18 films missing domestic gross revenue (2013) data, with 11 of those also missing international gross revenue data. We thought this may be due to international movies being included in the data set, but this was not the case. Due to this only being a small number of rows in our dataset and the reason for them missing being unclear, we felt it best to remove these rows missing domestic and international revenue from our dataset.
 
-MISSING DATA
-
--   decade code
-
--   remove rows missing revenue
-
-HOW DID WE GET GENRE DATA?
-
-```{r}
-# load the raw data, and format all the columns
+```{r load-packages, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
@@ -57,6 +46,10 @@ library(tidymodels)
 library(ISLR2)
 library(car)
 
+```
+
+```{r}
+# load the raw data and format all the columns
 movie_data <- read_csv(
   "https://raw.githubusercontent.com/ackerman-alex/IDS_702_Final_Project/refs/heads/main/Movies.csv",
   col_types = cols(
@@ -78,8 +71,6 @@ movie_data <- read_csv(
     genre = col_character()           # Movie genre
   )
 )
-
-
 
 # rename the columns to get rid of the space in the names.
 movie_data <- movie_data %>%
@@ -106,7 +97,6 @@ colSums(is.na(movie_data))[colSums(is.na(movie_data)) > 0]
 movie_data <- movie_data %>%
   mutate(decade_code = as.numeric(decade_code))
 
-
 # Fill with the missing value: 
 # for movies from 1980-1989 (included), the decade code is 4.
 # for movies from 1970-1979 (included), the decade code is 5.
@@ -130,7 +120,6 @@ movie_data <- movie_data %>%
     binary = factor(binary, levels = c("FAIL", "PASS")),
     decade_code = factor(decade_code)
   )
-
 ```
 
 ### 3.2 Variable Selection
@@ -141,11 +130,7 @@ movie_data <- movie_data %>%
 
 ### 4.1 Overview of Included Data
 
-After initial data preprocessing, our dataset contains XXXXX rows. Of these XXXX films, 803 of them passed the Bechdel test, while 991 of the films passed the test.
-
-|                             | Action | Comedy | Drama | Family | Horror | Romance | Other |
-|---------------------|--------|--------|--------|--------|--------|--------|--------|
-| Number of Movies in Dataset | 483    | 498    | 442   | 23     | 100    | 2       | 246   |
+After initial data preprocessing, our dataset contains 1,776 rows. Of these 1,776 films, 794 of them passed the Bechdel test, while 982 of the films passed the test.
 
 Table 1: Summary Statistics of Movie Financial Characteristics in 2013 USD
 
@@ -278,6 +263,36 @@ ggplot(data = data.frame(fitted = fitted(glm_model), residuals = residuals),
 
 ### 4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office
 
+|                             | Action | Comedy | Drama | Family | Horror | Romance | Other |
+|------------------|--------|--------|--------|--------|--------|--------|--------|
+| Number of Movies in Dataset | 483    | 498    | 442   | 23     | 100    | 2       | 46    |
+
+```{r}
+# OUTCOME VAR: Histogram for international gross revenue
+ggplot(movie_data, aes(x = `intgross_2013`)) +
+  geom_histogram(fill = "steelblue", bins = 30) +
+  labs(x = "International Gross Revenue (2013 dollars)", y = "Frequency") +
+  ggtitle("Histogram of International Gross Revenue (2013 dollars)") +
+  theme_minimal()
+
+
+# Convert the intgross_2013$ column to numeric after removing any commas
+movie_data$intgross_2013_numeric <- as.numeric(gsub(",", "", movie_data$`intgross_2013`))
+
+# Scatter plot with genre coloring and Bechdel Test result on x-axis
+ggplot(movie_data, aes(x = binary, y = intgross_2013_numeric, color = genre)) +
+  geom_jitter(position = position_jitter(width = 0.2, height = 0), alpha = 0.7, size = 2) +
+  scale_y_continuous(labels = scales::dollar) +
+  labs(
+    title = "International Gross Revenue by Bechdel Test Result, Colored by Genre",
+    x = "Bechdel Test Result",
+    y = "International Gross Revenue (2013$)",
+    color = "Genre"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
 ```{r}
 ResearchQ2Model <- lm(intgross_2013 ~  binary  + budget_2013 +domgross_2013+ decade_code + genre , data = movie_data)
 
@@ -313,7 +328,7 @@ points(influential_indices, cooks_distances[influential_indices], col = "red", p
 
 ```{r}
 movie_data_no_influential <- movie_data[-influential_points, ]
-ResearchQ2ModelWithoutExtreme <- lm(intgross_2013 ~ + binary + genre  + budget_2013 +domgross_2013+  period_code + decade_code  , data = clean_movie_data_no_influential)
+ResearchQ2ModelWithoutExtreme <- lm(intgross_2013 ~ + binary + genre  + budget_2013 +domgross_2013+ decade_code  , data = movie_data_no_influential)
 
 summary(ResearchQ2ModelWithoutExtreme)
 ```
