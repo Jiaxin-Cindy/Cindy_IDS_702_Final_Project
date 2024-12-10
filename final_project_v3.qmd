@@ -87,6 +87,8 @@ movie_data <- movie_data %>%
 movie_data$period_code <- NULL
 
 head(movie_data)
+
+glimpse(movie_data)
 ```
 
 ```{r, message=FALSE, results='hide'}
@@ -365,6 +367,26 @@ ggplot(movie_data, aes(x = as.factor(decade_code), y = budget_2013 / 1e6, fill =
 To further explore these trends, Figures 1, 2, and 3 provide additional context. Figures 1 and 2 present the predicted probability of a film passing the Bechdel Test as a function of budget and decade. Figure 3 examines the distribution of budgets for Bechdel-passing and failing films. Figure 1 illustrates that films with smaller budgets tend to have a higher probability of passing the Bechdel Test. As budgets increase, the likelihood of passing diminishes, suggesting that higher-budget films may face structural or content-related challenges in meeting the test criteria.
 
 **Figure 1:** Effect of Budget on Bechdel Test Outcome
+```{r}
+new_data$budget_millions <- new_data$budget_2013 / 1e6
+
+ggplot(new_data, aes(x = budget_millions, y = predicted_prob)) +
+  geom_point(alpha = 0.6, color = "blue", size = 2) +  # Scatter plot for data points
+  geom_smooth(method = "loess", color = "red", se = TRUE, linewidth = 1) +  # Smoothed trend with confidence interval
+  scale_x_continuous(labels = scales::dollar_format(suffix = "M")) +  # Format x-axis labels as millions
+  labs(
+    title = "Relationship Between Budget and Predicted Bechdel Test Probability",
+    x = "Budget (Millions, 2013 dollars)",
+    y = "Predicted Probability of Passing Bechdel Test"
+  ) +
+  theme_minimal() +  # Minimal theme with larger font
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold the title
+    axis.title = element_text(face = "bold"),  # Bold axis titles
+    axis.text = element_text(size = 12)  # Larger axis text
+  )
+
+```
 
 ```{r, message=FALSE}
 # Pre-transform budget to millions
@@ -610,7 +632,7 @@ ggplot(movie_data, aes(x = intgross_2013_millions)) +
 
 **Figure 6:** International Gross Revenue by Bechdel Test Result, Colored by Genre
 
-```{r}
+```{r, fig.show='hide'}
 
 # Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
 movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
@@ -630,8 +652,80 @@ ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, color = genre)) +
 
 ```
 
+```{r}
+# Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
+movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
 
+# Calculate average revenue by Bechdel Test result (binary) and genre
+average_revenue <- movie_data %>%
+  group_by(binary, genre) %>%
+  summarise(mean_revenue = mean(intgross_2013_millions, na.rm = TRUE)) %>%
+  ungroup()
 
+# Grouped bar chart
+ggplot(average_revenue, aes(x = genre, y = mean_revenue, fill = binary)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
+  labs(
+    title = "Impact of Bechdel Test Result on Revenue by Genre",
+    x = "Genre",
+    y = "Average International Gross Revenue (2013 dollars, in millions)",
+    fill = "Bechdel Test Result"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
+```
+```{r, fig.show='hide'}
+# Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
+movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
+
+# Faceted Box Plot
+ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, fill = binary)) +
+  geom_boxplot(outlier.alpha = 0.5) +
+  facet_wrap(~ genre, scales = "free_y") +
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
+  labs(
+    title = "International Gross Revenue by Bechdel Test Result and Genre",
+    x = "Bechdel Test Result",
+    y = "International Gross Revenue (2013 dollars, in millions)",
+    fill = "Bechdel Test Result"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(size = 10)
+  )
+
+```
+```{r}
+# Calculate average revenue by Bechdel Test result (binary) and genre
+average_revenue <- movie_data %>%
+  group_by(binary, genre) %>%
+  summarise(mean_revenue = mean(intgross_2013_millions, na.rm = TRUE)) %>%
+  ungroup()
+
+# Interaction Plot
+ggplot(average_revenue, aes(x = genre, y = mean_revenue, color = binary, group = binary)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
+  labs(
+    title = "Interaction Between Bechdel Test Result and Genre on Revenue",
+    x = "Genre",
+    y = "Average International Gross Revenue (2013 dollars, in millions)",
+    color = "Bechdel Test Result"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
+```
 
 
 
