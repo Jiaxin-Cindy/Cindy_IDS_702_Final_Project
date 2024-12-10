@@ -6,6 +6,8 @@ format: pdf
 header-includes:
       - \usepackage{float}
       - \floatplacement{table}{H}
+execute: 
+  echo: false
 ---
 
 # 1. Abstract
@@ -38,7 +40,7 @@ In addition to the information provided in the original dataset, our team though
 
 To begin our data processing, we removed the columns for budget, domestic revenue and international revenue which had these amounts in US dollar at time of release, and retained the columns which had these values in 2013 USD values. Our team felt it best to use only the 2013 inflation adjusted columns for each of these values in our analysis to ensure consistent and equitable comparison of financial metrics. Our initial exploration of the data also revealed missing values in the domestic and international gross revenue (2013) columns, as well as, most notably, the decade code column, which assigns a single digit corresponding to the movie's release decade. There were 179 rows of our data which were missing a decade code value, which we discovered were all films released in the 1970s and 1980s. We edited the data to fill in a '4' and '5' for movies released in the 1980s and 1970s, respectively. As far as data missing in the domestic and gross revenue columns, we could not pin point the exact cause of the data not being available. There were 18 films missing domestic gross revenue (2013) data, with 11 of those also missing international gross revenue data. We thought this may be due to international movies being included in the data set, but this was not the case. Due to this only being a small number of rows in our dataset and the reason for them missing being unclear, we felt it best to remove these rows missing domestic and international revenue from our dataset.
 
-```{r load-packages, message = FALSE, warning = FALSE}
+```{r, message=FALSE, results='hide', warning=FALSE}
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
@@ -48,7 +50,7 @@ library(car)
 
 ```
 
-```{r}
+```{r, message=FALSE, results='hide'}
 # load the raw data and format all the columns
 movie_data <- read_csv(
   "https://raw.githubusercontent.com/ackerman-alex/IDS_702_Final_Project/refs/heads/main/Movies.csv",
@@ -88,12 +90,12 @@ movie_data$period_code <- NULL
 head(movie_data)
 ```
 
-```{r}
+```{r, message=FALSE, results='hide'}
 # check for missing values
 colSums(is.na(movie_data))[colSums(is.na(movie_data)) > 0]
 ```
 
-```{r}
+```{r, message=FALSE, results='hide'}
 movie_data <- movie_data %>%
   mutate(decade_code = as.numeric(decade_code))
 
@@ -114,7 +116,7 @@ movie_data <- na.omit(movie_data)
 nrow(movie_data)
 ```
 
-```{r}
+```{r, message=FALSE, results='hide'}
 movie_data <- movie_data %>%
   mutate(
     binary = factor(binary, levels = c("FAIL", "PASS")),
@@ -153,7 +155,7 @@ Table 2: Logistic Regression Model Summary
 |          |          |           |         |         |
 |          |          |           |         |         |
 
-```{r}
+```{r, message=FALSE}
 # box plot for Budget Distribution by Decade
 ggplot(movie_data, aes(x = as.factor(decade_code), y = budget_2013, fill = as.factor(decade_code))) +
   geom_boxplot() +
@@ -166,7 +168,7 @@ ggplot(movie_data, aes(x = as.factor(decade_code), y = budget_2013, fill = as.fa
 
 **Interpretation:** The overall budget levels have remained relatively stable across decades when adjusted for inflation. Since movie budgets do not differ significantly across decades, the interaction term between budget_2013 and decade_code in the regression model may help explain decade-specific effects on passing the Bechdel Test.
 
-```{r}
+```{r, message=FALSE, results='hide'}
 # Construct the logistic regression model
 glm_model <- glm(binary ~ budget_2013 * decade_code, data = movie_data, family = "binomial")
 summary(glm_model)
@@ -181,7 +183,9 @@ new_data <- data.frame(
 
 new_data$predicted_prob <- predict(glm_model, newdata = new_data, type = "response")
 
+```
 
+```{r, message=FALSE}
 ggplot(new_data, aes(x = budget_2013, y = predicted_prob)) +
   geom_line(color = "blue", alpha = 0.5) +  
   geom_smooth(method = "loess", color = "red", se = FALSE) +  
@@ -195,7 +199,7 @@ ggplot(new_data, aes(x = budget_2013, y = predicted_prob)) +
 
 Thoughts: **Movies with higher budgets have a lower predictive probability of passing the Bechdel test.**
 
-```{r}
+```{r, message=FALSE}
 new_data <- expand.grid(
   budget_2013 = seq(min(movie_data$budget_2013, na.rm = TRUE), 
                        max(movie_data$budget_2013, na.rm = TRUE), 
@@ -222,7 +226,7 @@ For Decade Code 1, 2, 3, and 5: The trends are similar—higher budgets are asso
 
 For Decade Code 4: The curve is nearly flat, meaning budget has little impact on passing the Bechdel Test. This could suggest that high-budget films in this decade are less influenced by genre differences in gender representation.
 
-```{r}
+```{r, message=FALSE}
 # box plot for Budget Distribution by Bechdel Test Outcome
 library(ggpubr)
 
@@ -245,7 +249,7 @@ Overall:
 
 Some ways to refine the current glm:
 
-```{r}
+```{r, message=FALSE}
 residuals <- residuals(glm_model, type = "deviance")
 
 # Residuals vs. Fitted Values
@@ -264,10 +268,10 @@ ggplot(data = data.frame(fitted = fitted(glm_model), residuals = residuals),
 ### 4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office
 
 |                             | Action | Comedy | Drama | Family | Horror | Romance | Other |
-|------------------|--------|--------|--------|--------|--------|--------|--------|
+|-----------------------------|--------|--------|-------|--------|--------|---------|-------|
 | Number of Movies in Dataset | 483    | 498    | 442   | 23     | 100    | 2       | 46    |
 
-```{r}
+```{r, message=FALSE}
 # OUTCOME VAR: Histogram for international gross revenue
 ggplot(movie_data, aes(x = `intgross_2013`)) +
   geom_histogram(fill = "steelblue", bins = 30) +
@@ -293,17 +297,17 @@ ggplot(movie_data, aes(x = binary, y = intgross_2013_numeric, color = genre)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-```{r}
+```{r, message=FALSE, results='hide'}
 ResearchQ2Model <- lm(intgross_2013 ~  binary  + budget_2013 +domgross_2013+ decade_code + genre , data = movie_data)
 
 summary(ResearchQ2Model)
 ```
 
-```{r}
+```{r, message=FALSE, results='hide'}
 confint(ResearchQ2Model)
 ```
 
-```{r}
+```{r, message=FALSE, results='hide'}
 vif(ResearchQ2Model)
 ```
 
@@ -311,7 +315,7 @@ Cook’s Distance was evaluated to detect any extreme values in the data. As a r
 
 The **Year** column was found to cause multicollinearity in the fitted model and had a high Variance Inflation Factor (VIF) score. Upon careful investigation of the data, it was discovered that the **Decade** code conveys the same information as the **Year** column but provides a more generalized approach. Therefore, the removal of the **Year** column was decided to improve model performance and reduce multicollinearity.
 
-```{r}
+```{r, message=FALSE}
 cooks_distances <- cooks.distance(ResearchQ2Model)
 n <- nrow(movie_data)
 threshold <- 4 / n
@@ -326,7 +330,7 @@ influential_indices <- which(cooks_distances > threshold)
 points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
 ```
 
-```{r}
+```{r, message=FALSE, results='hide'}
 movie_data_no_influential <- movie_data[-influential_points, ]
 ResearchQ2ModelWithoutExtreme <- lm(intgross_2013 ~ + binary + genre  + budget_2013 +domgross_2013+ decade_code  , data = movie_data_no_influential)
 
