@@ -89,6 +89,25 @@ movie_data$period_code <- NULL
 head(movie_data)
 
 glimpse(movie_data)
+
+# Count the occurrences of each unique genre
+genre_counts <- movie_data %>%
+  count(genre, sort = TRUE)  # sort = TRUE orders the results by frequency
+
+# Display the counts
+print(genre_counts)
+
+# Recategorize "Romance" and "Family" as "Other"
+movie_data <- movie_data %>%
+  mutate(genre = ifelse(genre %in% c("Romance", "Family"), "Other", genre))
+
+# Count the occurrences of each unique genre after recategorization
+genre_counts <- movie_data %>%
+  count(genre, sort = TRUE)
+
+# Display the updated counts
+print(genre_counts)
+
 ```
 
 ```{r, message=FALSE, results='hide'}
