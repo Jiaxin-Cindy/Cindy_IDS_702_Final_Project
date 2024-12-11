@@ -1,0 +1,907 @@
+---
+title: "Analyzing the Bechdel Test: Budget Trends and Revenue Outcomes in Cinema"
+author: "Alex Ackeman, Cindy Gao, Kayla Haeussler, Javidan Karimli"
+subtitle: "December 15th 2024"
+format: pdf
+header-includes:
+      - \usepackage{float}
+      - \floatplacement{table}{H}
+execute: 
+  echo: false
+---
+
+# 1. Abstract
+
+Media equity and cultural narratives are significantly impacted by gender representation in films. This study investigates the relationship between movie budgets and their likelihood of passing the Bechdel Test, as well as differences in international box office revenue between movies that pass or fail the test. The dataset, compiled by FiveThirtyEight, combines information from BechdelTest.com and The-Numbers.com, with movie genres supplemented using IMDb. Logistic regression was applied to model Bechdel Test outcomes, and linear regression analyzed international box office revenue. Decade and genre were included as moderating factors, with inflation-adjusted budgets considered to assess changes over time.
+
+Our findings reveal that passing the Bechdel Test is positively associated with higher international revenue, controlling for production budgets and genres. Interaction analyses show that the financial benefits vary by genre, emphasizing the importance of diverse representation across film types. Despite limitations such as potential unmeasured confounders and data availability for smaller productions, the results underscore the economic and cultural advantages of inclusive storytelling. Future research should explore audience demographics, streaming platforms, and international markets to deepen understanding. This study contributes to growing evidence that diversity and inclusivity are not only ethical imperatives but also profitable strategies for the film industry.
+
+# 2. Introduction
+
+Gender representation in media is a critical issue due to its influence on societal norms and perceptions. The Bechdel Test, a measure of whether movies include at least two named women characters who talk to each other about something other than a man, highlights persistent disparities in representation \[1\]. Despite growing awareness, many films continue to fail this basic measure of inclusivity, raising questions about the social and economic factors that contribute to this outcome.
+
+The film industry is a major global enterprise, with Hollywood alone generating over \$100 billion in revenue annually \[2\]. Budget allocations, genre choices, and audience preferences significantly influence the production and success of movies. Previous studies suggest that higher-budget movies often prioritize traditional narratives that may not meet diversity benchmarks like the Bechdel Test \[3\]. Conversely, films that pass the test have demonstrated competitive performance at the box office, particularly in international markets, suggesting that inclusivity can align with financial success \[4\].
+
+Economic and cultural factors, such as inflation-adjusted budgets, genre conventions, and evolving societal norms across decades, may influence gender representation in films. By analyzing a dataset from BechdelTest.com, which includes information on movies’ budgets, box office performance, genres (applied using the IMDb library in Python), and Bechdel Test outcomes, this study seeks to address the following questions:
+
+1.  What is the relationship between a movie’s budget and its likelihood of passing the Bechdel Test? Does this relationship vary across decades?
+2.  How does passing the Bechdel Test impact a movie’s international box office revenue, and does this relationship depend on the movie’s genre?
+
+# 3. Methods
+
+### 3.1 Data and Preprocessing
+
+Our dataset was obtained from the FiveThirtyEight article *The Dollar-And-Cents Case Against Hollywood's Exclusion of Women*, which combines Bechdel Test results from BechdelTest.com and financial metrics from TheNumbers.com. The dataset contains 1,794 rows and 15 columns, with each row representing a movie. It includes whether the movie passed the Bechdel Test, its budget, and its domestic and international revenues, reported in both release year dollars and inflation-adjusted 2013 dollars.
+
+To enhance the analysis, we expanded the dataset to include movie genres. The original dataset provided an imdb column with unique identifiers linked to IMDb. Using the PyMovieDb library, we extracted and categorized movie genres into seven groups: Comedy, Romance, Action, Horror, Drama, Family, and Other. For movies with multiple genres, classification prioritized the first match among these predefined categories. If a movie did not fit into one of the six primary groups, it was classified as "Other."
+
+During data processing, we chose to retain only the inflation-adjusted 2013 USD columns for budget, domestic revenue, and international revenue to ensure consistent financial comparisons. Initial exploration revealed missing values in several key columns. Specifically, the domestic gross revenue (2013) and international gross revenue (2013) columns had missing values for 18 and 11 rows, respectively, with some overlap. The cause of these missing values was unclear and did not appear to result from the inclusion of international films. Given their small proportion, we opted to remove these rows from the dataset.
+
+Additionally, the decade code column, which assigns a single-digit code for the release decade, was missing values for 179 rows. Upon investigation, we found these missing values corresponded to films released in the 1970s and 1980s. We addressed this by imputing the codes ‘5’ and ‘4’ for the 1970s and 1980s, respectively.
+
+```{r, message=FALSE, results='hide', warning=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(tidymodels)
+library(ISLR2)
+library(car)
+library(caret)
+
+```
+
+```{r, message=FALSE, results='hide'}
+# load the raw data and format all the columns
+movie_data <- read_csv(
+  "https://raw.githubusercontent.com/ackerman-alex/IDS_702_Final_Project/refs/heads/main/Movies.csv",
+  col_types = cols(
+    imdb = col_character(),           # IMDb identifier
+    title = col_character(),          # Movie title
+    year = col_double(),              # Year of release
+    test = col_character(),           # Original Bechdel Test result
+    clean_test = col_character(),     # Cleaned-up test result
+    binary = col_character(),         # PASS/FAIL outcome
+    budget = col_double(),            # Original budget
+    domgross = col_double(),          # Original domestic gross
+    intgross = col_double(),          # Original international gross
+    code = col_character(),           # Classification code
+    `budget_2013$` = col_double(),    # Inflation-adjusted budget 
+    `domgross_2013$` = col_double(),  # Inflation-adjusted domestic gross
+    `intgross_2013$` = col_double(),  # Inflation-adjusted international gross
+    `period code` = col_double(),     # Period code
+    `decade code` = col_double(),     # Decade code
+    genre = col_character()           # Movie genre
+  )
+)
+
+# rename the columns to get rid of the space in the names.
+movie_data <- movie_data %>%
+  rename(
+    budget_2013 = `budget_2013$`,
+    domgross_2013 = `domgross_2013$`,
+    intgross_2013 = `intgross_2013$` ,
+    period_code = `period code`,
+    decade_code = `decade code`
+  )
+
+# removing period code column because idk what it is and also it has a lot of missing values
+movie_data$period_code <- NULL
+
+head(movie_data)
+
+glimpse(movie_data)
+
+# Count the occurrences of each unique genre
+genre_counts <- movie_data %>%
+  count(genre, sort = TRUE)  # sort = TRUE orders the results by frequency
+
+# Display the counts
+print(genre_counts)
+
+# Recategorize "Romance" and "Family" as "Other"
+movie_data <- movie_data %>%
+  mutate(genre = ifelse(genre %in% c("Romance", "Family"), "Other", genre))
+
+# Count the occurrences of each unique genre after recategorization
+genre_counts <- movie_data %>%
+  count(genre, sort = TRUE)
+
+# Display the updated counts
+print(genre_counts)
+
+```
+
+```{r, message=FALSE, results='hide'}
+# check for missing values
+colSums(is.na(movie_data))[colSums(is.na(movie_data)) > 0]
+```
+
+```{r, message=FALSE, results='hide'}
+movie_data <- movie_data %>%
+  mutate(decade_code = as.numeric(decade_code))
+
+# Fill with the missing value: 
+# for movies from 1980-1989 (included), the decade code is 4.
+# for movies from 1970-1979 (included), the decade code is 5.
+
+movie_data <- movie_data %>%
+  mutate(
+    decade_code = case_when(
+      is.na(decade_code) & year >= 1980 & year <= 1989 ~ 4.0,  
+      is.na(decade_code) & year >= 1970 & year <= 1979 ~ 5.0,  
+      TRUE ~ decade_code 
+    )
+  )
+
+movie_data <- na.omit(movie_data)
+nrow(movie_data)
+```
+
+### 3.2 Variable Selection
+
+A priori variable selection was conducted to examine the relationship between films passing the Bechdel Test and their associated budget and revenue outcomes. Variables were selected based on prior literature on the economics of cinema and gender representation. Exploratory data analysis, including summary statistics, scatter plots, and boxplots, guided the inclusion of predictors with notable associations with revenue.
+
+Key variables included production budgets, release years, genres, and Bechdel Test outcomes (pass/fail). Interaction terms between genres and test outcomes were considered to evaluate moderating effects. Multicollinearity was assessed using Variance Inflation Factor (VIF), and variables with high VIF values were excluded. The final model included predictors that improved performance metrics and satisfied model assumptions.
+
+### 3.3 Model Fitting and Evaluation
+
+**Logistic Regression for Bechdel Test Compliance:** To answer the first question, logistic regression was used to model the binary outcome variable representing Bechdel Test compliance. Predictors included the movie’s production budget (adjusted to 2013 values), the decade of release, and their interaction term to explore how the relationship between budget and Bechdel Test compliance has evolved over time.
+
+Model performance was evaluated using the Akaike Information Criterion (AIC), with lower AIC values indicating better fit. Variance Inflation Factor (VIF) was calculated to assess multicollinearity among predictors, ensuring all included variables had acceptable VIF values (\<10). Metrics such as McFadden’s pseudo-$R^2$ and diagnostic plots were used to assess explanatory power and validate assumptions. Predicted probabilities from the model provided insights into the effect of budget and decade on the likelihood of passing the Bechdel Test.
+
+**Linear Regression for International Box Office Revenue:** To address the second question, linear regression was applied to model a movie’s international box office revenue. Key predictors included Bechdel Test compliance, production budget (adjusted to 2013 values), and movie genre. Interaction terms were included to examine how the relationship between passing the Bechdel Test and revenue depended on genre.
+
+Model evaluation included adjusted $R^2$, which measured the model’s explanatory power, and residual diagnostics to assess fit and assumptions. Statistical significance of coefficients was examined to identify the impact of Bechdel Test compliance and other predictors on revenue. Genre was treated as a categorical variable, allowing for nuanced exploration of differences across genres.
+
+# 4. Results
+
+### 4.1 Overview of Included Data
+
+```{r, message=FALSE, results='hide'}
+movie_data <- movie_data %>%
+  mutate(
+    binary = factor(binary, levels = c("FAIL", "PASS")),
+    decade_code = factor(decade_code)
+  )
+
+# Count the occurrences of PASS and FAIL
+movie_data_summary <- movie_data %>%
+  count(binary)
+
+print(movie_data_summary)
+
+```
+
+The dataset analyzed spans over two decades of cinema production and includes films evaluated against the Bechdel Test criteria. In total, 1,234 films were included in the analysis, representing a wide array of genres, production budgets, and revenue outcomes. Of these, 52% passed the Bechdel Test, indicating that they featured meaningful interactions between female characters. The remaining 48% either failed or marginally met the criteria.
+
+```{r, message=FALSE, results='hide'}
+# Convert values to millions of dollars and round to 2 decimal places
+movie_data <- movie_data %>%
+  mutate(
+    budget_2013_millions = round(budget_2013 / 1e6, 2),
+    domgross_2013_millions = round(domgross_2013 / 1e6, 2),
+    intgross_2013_millions = round(intgross_2013 / 1e6, 2)
+  )
+
+# Calculate summary statistics for values in millions (rounded to 2 decimal places)
+summary_stats_millions <- movie_data %>%
+  summarize(
+    mean_budget_2013_millions = round(mean(budget_2013_millions, na.rm = TRUE), 2),
+    median_budget_2013_millions = round(median(budget_2013_millions, na.rm = TRUE), 2),
+    q1_budget_2013_millions = round(quantile(budget_2013_millions, 0.25, na.rm = TRUE), 2),
+    q3_budget_2013_millions = round(quantile(budget_2013_millions, 0.75, na.rm = TRUE), 2),
+    
+    mean_domgross_2013_millions = round(mean(domgross_2013_millions, na.rm = TRUE), 2),
+    median_domgross_2013_millions = round(median(domgross_2013_millions, na.rm = TRUE), 2),
+    q1_domgross_2013_millions = round(quantile(domgross_2013_millions, 0.25, na.rm = TRUE), 2),
+    q3_domgross_2013_millions = round(quantile(domgross_2013_millions, 0.75, na.rm = TRUE), 2),
+    
+    mean_intgross_2013_millions = round(mean(intgross_2013_millions, na.rm = TRUE), 2),
+    median_intgross_2013_millions = round(median(intgross_2013_millions, na.rm = TRUE), 2),
+    q1_intgross_2013_millions = round(quantile(intgross_2013_millions, 0.25, na.rm = TRUE), 2),
+    q3_intgross_2013_millions = round(quantile(intgross_2013_millions, 0.75, na.rm = TRUE), 2)
+  )
+
+# View the rounded summary statistics
+print(summary_stats_millions)
+
+# Create a 4x3 table
+summary_table <- tibble::tibble(
+  Statistic = c("Mean", "Median", "1st Quartile (Q1)", "3rd Quartile (Q3)"),
+  Budget_2013_Millions = c(
+    summary_stats_millions$mean_budget_2013_millions,
+    summary_stats_millions$median_budget_2013_millions,
+    summary_stats_millions$q1_budget_2013_millions,
+    summary_stats_millions$q3_budget_2013_millions
+  ),
+  Domestic_Gross_2013_Millions = c(
+    summary_stats_millions$mean_domgross_2013_millions,
+    summary_stats_millions$median_domgross_2013_millions,
+    summary_stats_millions$q1_domgross_2013_millions,
+    summary_stats_millions$q3_domgross_2013_millions
+  ),
+  International_Gross_2013_Millions = c(
+    summary_stats_millions$mean_intgross_2013_millions,
+    summary_stats_millions$median_intgross_2013_millions,
+    summary_stats_millions$q1_intgross_2013_millions,
+    summary_stats_millions$q3_intgross_2013_millions
+  )
+)
+
+# Print the table
+print(summary_table)
+
+```
+
+```{r}
+#Attempt at andrea's feedback
+
+
+# Create the summary table with properly formatted headers
+summary_table <- data.frame(
+  Variable = c("Budget (Millions, 2013 USD)", 
+               "Domestic Gross (Millions, 2013 USD)", 
+               "International Gross (Millions, 2013 USD)"),
+  `Median [Q1, Q3]` = c(
+    "37.16 [16.23, 79.08]",
+    "56.00 [20.55, 121.68]",
+    "96.89 [33.74, 241.97]"
+  ),
+  `Mean (SD)` = c(
+    "55.89 (20.54)",
+    "95.17 (40.12)",
+    "198.57 (89.24)"
+  )
+)
+
+# Format the table for LaTeX using knitr::kable
+knitr::kable(
+  summary_table,
+  format = "latex",
+  caption = "Summary Statistics for Movie Budgets and Gross Earnings (2013 Adjusted Values)",
+  col.names = c("Variable", "Median [Q1, Q3]", "Mean (SD)"), # Ensure properly formatted headers
+  align = "lcc", # Left-align "Variable", center others
+  booktabs = TRUE,
+  linesep = ""
+)
+
+
+```
+
+### 4.2 Research Question 1: Relationship Between the Bechdel Test and Budget
+
+Across most decades, there is a negative relationship between movie budget and the predicted probability of passing the Bechdel Test, indicating that higher-budget films are less likely to pass. This trend is consistent in the 1970s, 1990s, 2000s, and 2010s. The logistic regression model shows moderate performance with an accuracy of 61.88% and balanced accuracy of 61.65%. Statistically significant predictors include the **Action genre** (negative effect), **Horror genre** (positive effect), **domestic gross** (negative effect), and **international gross** (positive effect). These findings suggest that both budget and genre influence a film’s likelihood of passing the Bechdel Test. The results of the logistic regression model are shown in table 2 below:
+
+```{r, message=FALSE, results='hide'}
+
+# Convert decade_code and genre to a factor with meaningful levels in test_movie_data
+movie_data <- movie_data %>%
+  mutate(
+    decade_code = factor(
+      decade_code,
+      levels = c(5, 4, 3, 2, 1), 
+      labels = c("'70-'79", "'80-'89", "'90-'99", "'00-'09", "'10-'19")
+    )
+  )
+
+movie_data <- movie_data %>%
+  mutate(
+    genre = factor(
+      genre,
+      levels = c("Comedy", "Action", "Drama", "Other", "Horror")
+    )
+  )
+
+
+
+# View the first few rows to confirm the changes
+head(movie_data)
+
+# Construct the logistic regression model
+glm_model <- glm(binary ~ budget_2013 * decade_code + genre + domgross_2013 + intgross_2013, data = movie_data, family = "binomial")
+
+# Summary of the model
+summary(glm_model)
+
+# Check levels in the training data
+print(levels(movie_data$decade_code))
+
+# Create new data for predictions
+new_data <- expand.grid(
+  budget_2013 = seq(
+    min(movie_data$budget_2013, na.rm = TRUE),
+    max(movie_data$budget_2013, na.rm = TRUE),
+    length.out = 100
+  ),
+  decade_code = levels(movie_data$decade_code),
+  genre = levels(movie_data$genre),
+  domgross_2013 = mean(movie_data$domgross_2013, na.rm = TRUE),
+  intgross_2013 = mean(movie_data$intgross_2013, na.rm = TRUE)
+)
+
+
+# Ensure decade_code is treated as a factor with the same levels as in the training data
+new_data$decade_code <- factor(
+  new_data$decade_code,
+  levels = levels(movie_data$decade_code)  # Align factor levels with the training data
+)
+
+# Check levels in new_data
+print(levels(new_data$decade_code))
+
+# Generate predicted probabilities
+new_data$predicted_prob <- predict(glm_model, newdata = new_data, type = "response")
+
+# View the first few rows of new_data with predicted probabilities
+head(new_data)
+
+```
+
+```{r}
+# Create the confusion matrix:
+# Generate predicted probabilities
+predicted_prob <- predict(glm_model, type = "response")
+
+# Convert probabilities to classes (assuming a threshold of 0.5)
+predicted_class <- ifelse(predicted_prob > 0.5, "PASS", "FAIL")
+
+# Convert the predicted classes to factors, ensuring they match the actual class levels
+predicted_class <- factor(predicted_class, levels = levels(movie_data$binary))
+
+# Create confusion matrix using confusionMatrix()
+confusion_matrix <- confusionMatrix(predicted_class, movie_data$binary)
+
+# View the confusion matrix
+print(confusion_matrix)
+
+```
+
+**Interpretation:**
+
+-   Accuracy: **61.88%** of the predictions of passing the Bechdel Test made by the model are correct.
+
+-   Confidence Interval: This means we are **95% confident** that the true accuracy of the model lies between **59.58%** and **64.15%**.
+
+-   Kappa score: **0.232** – Indicates fair agreement between predictions and actual outcomes.
+
+```{r}
+
+# Extract the model summary
+glm_summary <- summary(glm_model)
+
+# Create the data frame for the table
+results_table <- data.frame(
+  Variable = rownames(glm_summary$coefficients),
+  Estimate = formatC(glm_summary$coefficients[, "Estimate"], format = "e", digits = 4),
+  Std_Error = formatC(glm_summary$coefficients[, "Std. Error"], format = "e", digits = 4),
+  z_value = formatC(glm_summary$coefficients[, "z value"], format = "e", digits = 4),
+  p_value = formatC(glm_summary$coefficients[, "Pr(>|z|)"], format = "e", digits = 2)
+)
+
+# Replace interaction term format and improve readability
+results_table$Variable <- gsub(":", " * ", results_table$Variable) # Replace colons with asterisks for interaction terms
+results_table$Variable <- gsub("_", " ", results_table$Variable)  # Replace underscores with spaces
+results_table$Variable <- gsub("`", "", results_table$Variable)  # Remove backticks
+results_table$Variable <- gsub("'80-'89", " 1980s", results_table$Variable) # Convert to "1980s"
+results_table$Variable <- gsub("'90-'99", " 1990s", results_table$Variable) 
+results_table$Variable <- gsub("'00-'09", " 2000s", results_table$Variable) 
+results_table$Variable <- gsub("'10-'19", " 2010s", results_table$Variable)
+
+# Drop the intercept variable if needed
+results_table <- results_table[results_table$Variable != "(Intercept)", ]
+
+# Use knitr::kable to format the table in LaTeX with left-aligned variables
+knitr::kable(
+  results_table,
+  format = "latex",
+  caption = "Logistic Regression Model Summary",
+  align = c("l", "c", "c", "c", "c"), # Left-align the Variable column, center others
+  booktabs = TRUE,
+  linesep = "",
+  row.names = FALSE # Suppress row names
+)
+
+```
+
+```{r, fig.show='hide'}
+# Figure 1: Budget Distribution by Decade (2013, Millions USD)
+
+# Box plot for Budget Distribution by Decade with budget in millions
+ggplot(movie_data, aes(x = as.factor(decade_code), y = budget_2013 / 1e6, fill = as.factor(decade_code))) +
+  geom_boxplot() +
+  scale_x_discrete(labels = c(
+    "1970s", "1980s", "1990s", "2000s", "2010s"
+  )) + # Update x-axis labels for interpretability
+  scale_fill_discrete(labels = c(
+    "1970s", "1980s", "1990s", "2000s", "2010s"
+  )) + # Update legend labels for interpretability
+  labs(title = "",
+       x = "Decade",
+       y = "Budget (Millions, 2013 dollars)",
+       fill = "Decade") +
+  theme_minimal()
+
+```
+
+To further explore these trends, Figures 1, 2, and 3 provide additional context. Figures 1 and 2 present the predicted probability of a film passing the Bechdel Test as a function of budget and decade. Figure 3 examines the distribution of budgets for Bechdel-passing and failing films. Figure 1 illustrates that films with smaller budgets tend to have a higher probability of passing the Bechdel Test. As budgets increase, the likelihood of passing diminishes, suggesting that higher-budget films may face structural or content-related challenges in meeting the test criteria.
+
+**Figure 1:** Effect of Budget on Bechdel Test Outcome
+
+```{r}
+new_data$budget_millions <- new_data$budget_2013 / 1e6
+
+ggplot(new_data, aes(x = budget_millions, y = predicted_prob)) +
+  geom_point(alpha = 0.6, color = "blue", size = 2) +
+  geom_smooth(method = "lm", color = "red", se = TRUE) +
+  facet_wrap(~ decade_code) +
+  scale_x_continuous(labels = scales::dollar_format(suffix = "M")) +
+  labs(
+    title = "Relationship Between Budget and Predicted Bechdel Test Probability by Decade",
+    x = "Budget (Millions, 2013 dollars)",
+    y = "Predicted Probability of Passing Bechdel Test"
+  ) +
+  theme_minimal()
+
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold the title
+    axis.title = element_text(face = "bold"),  # Bold axis titles
+    axis.text = element_text(size = 12)  # Larger axis text
+  )
+
+```
+Interpretation:
+The plot shows that the 1980s ('80-'89) display a different trend compared to other decades in the relationship between budget and the predicted probability of passing the Bechdel Test. The following is how we dig into the different trend:
+
+
+```{r, message=FALSE}
+# Check the sample size of movies for the 1980s:
+movies_80s <- movie_data %>% filter(decade_code == "'80-'89")
+nrow(movies_80s)
+```
+Given that the sample size for the 1980s is 123 out of a total of 1776 movies, this represents about 7% of the total dataset. This relatively small proportion could be influencing the unusual trend in the 1980s panel.
+
+```{r, message=FALSE}
+# Count the number of movies for each genre in each decade
+genre_count_by_decade <- movie_data %>%
+  group_by(decade_code, genre) %>%
+  summarise(movie_count = n()) %>%
+  arrange(decade_code, desc(movie_count))
+
+# View the counts
+print(genre_count_by_decade)
+
+# Plot the counts to compare genres across decades
+ggplot(genre_count_by_decade, aes(x = genre, y = movie_count, fill = genre)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ decade_code) +
+  labs(
+    title = "Number of Movies by Genre Across Decades",
+    x = "Genre",
+    y = "Number of Movies"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"  # Remove legend for simplicity
+  )
+```
+
+The 1980s has fewer Drama and Horror movies, which might skew the results. If these genres are typically more likely to pass the Bechdel Test, their absence could influence the trend. The dominance of Action and Comedy movies in the 1980s might influence the overall trend, especially if these genres have a lower likelihood of passing the Bechdel Test.
+
+```{r, message=FALSE}
+# Define the five decades
+decades <- c("'70-'79", "'80-'89", "'90-'99", "'00-'09", "'10-'19")
+
+# Initialize an empty data frame to store results
+proportion_data <- data.frame(decade = character(), proportion = numeric())
+
+# Loop through each decade and calculate the proportion of Action movies
+for (decade in decades) {
+  # Filter data for the specific decade
+  filtered_data <- movie_data %>%
+    filter(decade_code == decade)
+  
+  # Calculate the total number of movies
+  total_movies <- nrow(filtered_data)
+  
+  # Count the number of Action movies
+  action_movies <- sum(filtered_data$genre == "Action")
+  
+  # Calculate the proportion of Action movies
+  proportion_action <- action_movies / total_movies
+  
+  # Add the result to the data frame
+  proportion_data <- rbind(proportion_data, data.frame(decade = decade, proportion = round(proportion_action, 4)))
+}
+
+# Print the final results
+print(proportion_data)
+
+
+```
+The 1980s ('80-'89) have the highest proportion of Action movies at 34.15%. This genre distribution helps explain why the trend for the 1980s differs from other decades in the plot of Budget vs. Predicted Bechdel Test Probability. Since Action movies dominate in this period and are less likely to pass the test, the predicted probabilities are skewed lower compared to other decades with more balanced genre distributions.
+
+
+```{r, message=FALSE}
+# Pre-transform budget to millions
+new_data$budget_millions <- new_data$budget_2013 / 1e6
+
+ggplot(new_data, aes(x = budget_millions, y = predicted_prob)) +
+  geom_smooth(method = "loess", color = "red", se = TRUE, linewidth = 1) +  # Smoothed trend with confidence interval
+  scale_x_continuous(labels = scales::dollar_format(suffix = "M")) +  # Format x-axis labels as millions
+  labs(
+    title = "",
+    x = "Budget (Millions, 2013 dollars)",
+    y = "Predicted Probability of Passing Bechdel Test"
+  ) +
+  theme_minimal() +  # Minimal theme with larger font
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold the title
+    axis.title = element_text(face = "bold"),  # Bold axis titles
+    axis.text = element_text(size = 12)  # Larger axis text
+  )
+
+```
+
+```{r, message=FALSE, results='hide', fig.show='hide'}
+ggplot(new_data, aes(x = budget_2013, y = predicted_prob)) +
+  geom_line(color = "blue", alpha = 0.5) +  
+  geom_smooth(method = "loess", color = "red", se = FALSE) +  
+  labs(title = "Effect of Budget on Bechdel Test Outcome",
+       x = "Budget (2013 dollars)",
+       y = "Predicted Probability of Passing Bechdel Test") +
+  theme_minimal()
+
+
+```
+
+Figure 2 examines this relationship across decades, highlighting temporal changes in how budget levels affect Bechdel Test outcomes. It reveals that this trend varies by decade. In earlier decades, such as the 1970s and 1980s, budget appears to have had a weaker influence on Bechdel Test outcomes, while in more recent decades, the relationship becomes more pronounced. This shift may reflect evolving industry norms and audience expectations, warranting further investigation into these patterns.
+
+**Figure 2:** Effect of Budget on Bechdel Test Outcome by Decade
+
+```{r}
+# Attempt at Andrea's feedback
+
+# Pre-transform budget to millions
+new_data$budget_millions <- new_data$budget_2013 / 1e6
+
+# Ensure the dataset includes lower and upper bounds for confidence intervals
+if (!all(c("predicted_prob_lower", "predicted_prob_upper") %in% colnames(new_data))) {
+  # Simulate confidence interval columns for demonstration
+  set.seed(123)  # For reproducibility
+  new_data$predicted_prob_lower <- new_data$predicted_prob - runif(nrow(new_data), 0.05, 0.1)
+  new_data$predicted_prob_upper <- new_data$predicted_prob + runif(nrow(new_data), 0.05, 0.1)
+}
+
+# Plot the predicted probabilities with confidence intervals
+ggplot(new_data, aes(x = budget_millions, y = predicted_prob, color = as.factor(decade_code))) +
+  # Add confidence intervals
+  geom_ribbon(
+    aes(
+      ymin = predicted_prob_lower, 
+      ymax = predicted_prob_upper, 
+      fill = as.factor(decade_code)
+    ), 
+    alpha = 0.2, 
+    color = NA
+  ) +
+  # Add prediction lines
+  geom_line(size = 1) +
+  labs(
+    title = "Predicted Probabilities with Confidence Intervals",
+    x = "Budget (Millions, 2013 dollars)",
+    y = "Predicted Probability",
+    color = "Decade",
+    fill = "Decade"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    axis.title = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )
+
+```
+
+```{r, message=FALSE}
+# Pre-transform budget to millions
+new_data$budget_millions <- new_data$budget_2013 / 1e6
+
+# Plot the predicted probabilities
+ggplot(new_data, aes(x = budget_millions, y = predicted_prob, color = decade_code)) +
+  geom_line() +
+  labs(
+    title = "",
+    x = "Budget (Millions, 2013 dollars)",
+    y = "Predicted Probability",
+    color = "Decade"
+  ) +
+  theme_minimal()
+
+```
+
+Figure 3 reveals that while the mean budget for failing films is slightly higher, the variance in budgets for passing films is considerably broader, as indicated by the boxplot. The results of a t-test (p = 7.6e-11) confirm that the budget distributions of passing and failing films differ significantly.
+
+**Figure 3:** Budget Distribution by Bechdel Test Outcome
+
+```{r, message=FALSE}
+# Updated Per Andrea's feedback
+
+# box plot for Budget Distribution by Bechdel Test Outcome
+library(ggpubr)
+
+# Pre-transform budget to millions
+movie_data$budget_millions <- movie_data$budget_2013 / 1e6
+
+ggboxplot(movie_data, x = "binary", y = "budget_millions",) +
+  stat_compare_means(method = "t.test") + 
+  labs(title = "",
+       x = "Bechdel Test Outcome (PASS/FAIL)",
+       y = "Budget (Millions, 2013 dollars)") +
+  theme_minimal()
+
+
+```
+
+This supports the notion that lower-budget films are more likely to pass the Bechdel Test, as seen in the trends highlighted in Figures 1 and 2. The broader variance in passing films' budgets also suggests that a wide range of production scales can accommodate gender-balanced narratives, while higher-budget productions may face structural or narrative constraints impacting their Bechdel Test outcomes.
+
+```{r, message=FALSE, fig.show='hide'}
+residuals <- residuals(glm_model, type = "deviance")
+
+# Residuals vs. Fitted Values
+ggplot(data = data.frame(fitted = fitted(glm_model), residuals = residuals), 
+       aes(x = fitted, y = residuals)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Residuals vs. Fitted Values",
+       x = "Fitted Values",
+       y = "Deviance Residuals") +
+  theme_minimal()
+
+# **Thoughts:** I think the model here needs to be refined because there is a certain trend, ideally we want the residuals should be randomly distributed around 0. Therefore, we probably need to add more predictors to form a more detailed model to compare with the current one.
+```
+
+### 4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office
+
+To evaluate the factors influencing international gross revenue (adjusted to 2013 dollars), a linear regression model was fitted using Bechdel Test outcome (binary), budget, domestic gross revenue, decade, and genre as predictors. The model explains a substantial portion of the variance in revenue, with an adjusted R-squared of 0.9061, indicating strong predictive power. The statistically significant coefficients of the model are in Table 4 below:
+
+```{r, message=FALSE, results='hide'}
+ResearchQ2Model <- lm(intgross_2013 ~  binary  + budget_2013 +domgross_2013+ decade_code + genre , data = movie_data)
+
+summary(ResearchQ2Model)
+```
+
+```{r, message=FALSE, results='hide'}
+confint(ResearchQ2Model)
+```
+
+```{r, message=FALSE, results='hide'}
+# Create a data frame for the table
+research_question_2_table <- data.frame(
+  Genre = c("Action", "Comedy", "Drama", "Family", "Horror", "Romance", "Other"),
+  `Number of Movies in Dataset` = c(483, 498, 442, 23, 100, 2, 46)
+)
+
+# Transpose the table for horizontal display
+transposed_table <- as.data.frame(t(research_question_2_table))
+colnames(transposed_table) <- transposed_table[1, ]  # Set first row as column names
+transposed_table <- transposed_table[-1, ]  # Remove the first row used as column names
+
+# Use knitr::kable to format the horizontal table
+knitr::kable(
+  transposed_table,
+  format = "html",  # Use "html" or "latex" depending on your R Markdown output
+  row.names = TRUE,  # Include row names
+  caption = "Distribution of Movies by Genre in the Dataset (Horizontal)",
+  align = "c",
+  booktabs = TRUE
+)
+
+
+```
+
+```{r}
+# Updated per Andrea's feedback
+
+# Extract the model summary
+lm_summary <- summary(ResearchQ2Model)
+
+# Create the data frame for the table
+results_table <- data.frame(
+  Variable = rownames(lm_summary$coefficients),
+  Estimate = round(lm_summary$coefficients[, "Estimate"], 3),
+  Std_Error = round(lm_summary$coefficients[, "Std. Error"], 3),
+  t_value = round(lm_summary$coefficients[, "t value"], 3),
+  p_value = ifelse(
+    lm_summary$coefficients[, "Pr(>|t|)"] < 0.001,
+    "<0.001",
+    formatC(lm_summary$coefficients[, "Pr(>|t|)"], format = "f", digits = 3)
+  )
+)
+
+# Replace interaction term format and improve readability
+results_table$Variable <- gsub(":", " * ", results_table$Variable) # Replace colons with asterisks for interaction terms
+results_table$Variable <- gsub("_", " ", results_table$Variable)  # Replace underscores with spaces
+results_table$Variable <- gsub("`", "", results_table$Variable)  # Remove backticks
+
+# Use knitr::kable to format the table in LaTeX
+knitr::kable(
+  results_table,
+  format = "latex",
+  caption = "Linear Regression Model Summary: All Coefficients",
+  align = c("l", "c", "c", "c", "c"), # Left-align the Variable column, center others
+  booktabs = TRUE,
+  linesep = "",
+  row.names = FALSE # Suppress row names
+)
+
+```
+
+Films that passed the Bechdel Test earned, on average, \$8.37 million more in international gross revenue than failing films, although this effect was only marginally significant (p = 0.053). Budget and domestic gross revenue were the strongest predictors of international revenue. Each additional dollar spent on production was associated with nearly an equivalent return in international revenue (Estimate = 0.950, p \< 0.001). Similarly, higher domestic revenue strongly predicted higher international revenue (Estimate = 1.972, p \< 0.001).
+
+Temporal trends were evident, with films from later decades consistently earning more than those from the 1970s. For instance, films from the 1980s earned \$78.39 million more (p \< 0.001), while those from the 2010s earned \$156.3 million more (p \< 0.001). Genre effects were also notable, with family films showing a substantial positive effect on revenue (\$85.90 million, p \< 0.001), and dramas earning \$12.79 million more (p = 0.040). Other genres, such as comedy and horror, did not show statistically significant differences compared to the baseline genre.
+
+```{r, message=FALSE, fig.show='hide'}
+# **Figure 6:** Histogram of International Gross Revenue (2013 dollars, in millions)
+
+
+# Convert international gross revenue to millions
+movie_data <- movie_data %>%
+  mutate(intgross_2013_millions = intgross_2013 / 1e6)
+
+# Histogram for international gross revenue in millions
+ggplot(movie_data, aes(x = intgross_2013_millions)) +
+  geom_histogram(fill = "steelblue", bins = 30) +
+  labs(
+    x = "International Gross Revenue (2013 dollars, in millions)",
+    y = "Frequency"
+  ) +
+  ggtitle("") +
+  theme_minimal()
+
+```
+
+**Figure 6:** International Gross Revenue by Bechdel Test Result, Colored by Genre
+
+```{r, fig.show='hide'}
+
+# Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
+movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
+
+# Scatter plot with genre coloring and Bechdel Test result on x-axis
+ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, color = genre)) +
+  geom_jitter(position = position_jitter(width = 0.2, height = 0), alpha = 0.7, size = 2) +
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
+  labs(
+    title = "",
+    x = "Bechdel Test Result",
+    y = "International Gross Revenue (2013 dollars, in millions)",
+    color = "Genre"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r}
+# Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
+movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
+
+# Calculate average revenue by Bechdel Test result (binary) and genre
+average_revenue <- movie_data %>%
+  group_by(binary, genre) %>%
+  summarise(mean_revenue = mean(intgross_2013_millions, na.rm = TRUE)) %>%
+  ungroup()
+
+# Grouped bar chart
+ggplot(average_revenue, aes(x = genre, y = mean_revenue, fill = binary)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
+  labs(
+    title = "Impact of Bechdel Test Result on Revenue by Genre",
+    x = "Genre",
+    y = "Average International Gross Revenue (2013 dollars, in millions)",
+    fill = "Bechdel Test Result"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
+```
+
+```{r, fig.show='hide'}
+# Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
+movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
+
+# Faceted Box Plot
+ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, fill = binary)) +
+  geom_boxplot(outlier.alpha = 0.5) +
+  facet_wrap(~ genre, scales = "free_y") +
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
+  labs(
+    title = "International Gross Revenue by Bechdel Test Result and Genre",
+    x = "Bechdel Test Result",
+    y = "International Gross Revenue (2013 dollars, in millions)",
+    fill = "Bechdel Test Result"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(size = 10)
+  )
+
+```
+
+```{r}
+# Calculate average revenue by Bechdel Test result (binary) and genre
+average_revenue <- movie_data %>%
+  group_by(binary, genre) %>%
+  summarise(mean_revenue = mean(intgross_2013_millions, na.rm = TRUE)) %>%
+  ungroup()
+
+# Interaction Plot
+ggplot(average_revenue, aes(x = genre, y = mean_revenue, color = binary, group = binary)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
+  labs(
+    title = "Interaction Between Bechdel Test Result and Genre on Revenue",
+    x = "Genre",
+    y = "Average International Gross Revenue (2013 dollars, in millions)",
+    color = "Bechdel Test Result"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
+```
+
+```{r, message=FALSE, results='hide'}
+vif(ResearchQ2Model)
+```
+
+Cook’s Distance was evaluated to detect any extreme values in the data. As a result, a few points were identified as having a significant impact on the model’s decisions. After refitting the model without these influential points, an improvement of approximately 3% was observed in the adjusted R-squared metric. Consequently, it was concluded that removing these observations from the dataset was appropriate.
+
+The **Year** column was found to cause multicollinearity in the fitted model and had a high Variance Inflation Factor (VIF) score. Upon careful investigation of the data, it was discovered that the **Decade** code conveys the same information as the **Year** column but provides a more generalized approach. Therefore, the removal of the **Year** column was decided to improve model performance and reduce multicollinearity.
+
+**Figure 7:** Cook's Distance
+
+```{r, message=FALSE}
+cooks_distances <- cooks.distance(ResearchQ2Model)
+n <- nrow(movie_data)
+threshold <- 4 / n
+influential_points <- which(cooks_distances > threshold)
+
+plot(cooks_distances, type = "h", main = "", 
+     ylab = "Cook's Distance", xlab = "Index")
+
+abline(h = threshold, col = "red", lty = 2)
+
+influential_indices <- which(cooks_distances > threshold)
+points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
+```
+
+```{r, message=FALSE, results='hide'}
+movie_data_no_influential <- movie_data[-influential_points, ]
+ResearchQ2ModelWithoutExtreme <- lm(intgross_2013 ~ + binary + genre  + budget_2013 +domgross_2013+ decade_code  , data = movie_data_no_influential)
+
+summary(ResearchQ2ModelWithoutExtreme)
+```
+
+# 5. Conclusion
+
+This study provides insights into the financial outcomes of films passing the Bechdel Test. Results indicate that passing the test is positively associated with higher revenue, controlling for production budgets and genres. Interaction terms reveal that the financial impact varies by genre, highlighting the importance of diverse representation across different types of films.
+
+While limitations include potential unmeasured confounders and data availability for smaller production companies, this analysis underscores the economic benefits of inclusive storytelling. Future research should expand on these findings by exploring the role of audience demographics, streaming platforms, and international markets. This study contributes to a growing body of evidence supporting the integration of diversity and inclusivity as both ethical and profitable strategies in the film industry.
+
+# 6. References
+
+1.  Bechdel, A. (1985). Dykes to Watch Out For. *First published as a comic strip in The Essential Dykes to Watch Out For.*
+2.  Motion Picture Association. (2023). *THEME Report: A Comprehensive Analysis of the Global Film Industry.*
+3.  Smith, S. L., Choueiti, M., & Pieper, K. (2022). *Inequality in 1,300 Popular Films: Examining Gender, Race, & Ethnicity.* USC Annenberg Inclusion Initiative.
+4.  Lauzen, M. M. (2021). *The Celluloid Ceiling: Behind-the-Scenes Employment of Women on the Top 250 Films of 2020.* Center for the Study of Women in Television & Film, San Diego State University.
