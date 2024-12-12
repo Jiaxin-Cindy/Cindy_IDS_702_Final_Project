@@ -667,10 +667,27 @@ ggplot(data = data.frame(fitted = fitted(glm_model), residuals = residuals),
 To evaluate the factors influencing international gross revenue (adjusted to 2013 dollars), a linear regression model was fitted using Bechdel Test outcome (binary), budget, domestic gross revenue, decade, and genre as predictors. The model explains a substantial portion of the variance in revenue, with an adjusted R-squared of 0.9061, indicating strong predictive power. The statistically significant coefficients of the model are in Table 4 below:
 
 ```{r, message=FALSE, results='hide'}
-ResearchQ2Model <- lm(intgross_2013 ~  binary  + budget_2013 +domgross_2013+ decade_code + genre , data = movie_data)
+ResearchQ2Model <- lm(intgross_2013 ~ binary * genre + budget_2013 + year, data = movie_data)
 
 summary(ResearchQ2Model)
+
+plot(ResearchQ2Model)
 ```
+
+```{r}
+#Conduct Log Transformation
+
+movie_data$log_budget <- log(movie_data$budget_2013)
+movie_data$log_intgross <- log(movie_data$intgross_2013)
+log_lm_model <- lm(log_intgross ~ binary * genre + log_budget + year, data = movie_data)
+
+summary(log_lm_model)
+
+plot(log_lm_model)
+
+```
+
+
 
 ```{r, message=FALSE, results='hide'}
 confint(ResearchQ2Model)
@@ -679,8 +696,8 @@ confint(ResearchQ2Model)
 ```{r, message=FALSE, results='hide'}
 # Create a data frame for the table
 research_question_2_table <- data.frame(
-  Genre = c("Action", "Comedy", "Drama", "Family", "Horror", "Romance", "Other"),
-  `Number of Movies in Dataset` = c(483, 498, 442, 23, 100, 2, 46)
+  Genre = c("Action", "Comedy", "Drama", "Horror", "Other"),
+  `Number of Movies in Dataset` = c(483, 498, 442, 100,  271)
 )
 
 # Transpose the table for horizontal display
@@ -835,31 +852,6 @@ ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, fill = binary)) +
 
 ```
 
-```{r}
-# Calculate average revenue by Bechdel Test result (binary) and genre
-average_revenue <- movie_data %>%
-  group_by(binary, genre) %>%
-  summarise(mean_revenue = mean(intgross_2013_millions, na.rm = TRUE)) %>%
-  ungroup()
-
-# Interaction Plot
-ggplot(average_revenue, aes(x = genre, y = mean_revenue, color = binary, group = binary)) +
-  geom_line(size = 1.2) +
-  geom_point(size = 3) +
-  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
-  labs(
-    title = "Interaction Between Bechdel Test Result and Genre on Revenue",
-    x = "Genre",
-    y = "Average International Gross Revenue (2013 dollars, in millions)",
-    color = "Bechdel Test Result"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "top"
-  )
-
-```
 
 ```{r, message=FALSE, results='hide'}
 vif(ResearchQ2Model)
@@ -888,7 +880,7 @@ points(influential_indices, cooks_distances[influential_indices], col = "red", p
 
 ```{r, message=FALSE, results='hide'}
 movie_data_no_influential <- movie_data[-influential_points, ]
-ResearchQ2ModelWithoutExtreme <- lm(intgross_2013 ~ + binary + genre  + budget_2013 +domgross_2013+ decade_code  , data = movie_data_no_influential)
+ResearchQ2ModelWithoutExtreme <- lm(intgross_2013 ~ + binary + genre  + budget_2013 + decade_code  , data = movie_data_no_influential)
 
 summary(ResearchQ2ModelWithoutExtreme)
 ```
