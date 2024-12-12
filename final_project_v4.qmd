@@ -665,13 +665,12 @@ ggplot(data = data.frame(fitted = fitted(glm_model), residuals = residuals),
 ### 4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office
 
 To evaluate the factors influencing international gross revenue (adjusted to 2013 dollars), a linear regression model was fitted using Bechdel Test outcome (binary), budget, domestic gross revenue, decade, and genre as predictors. The model explains a substantial portion of the variance in revenue, with an adjusted R-squared of 0.9061, indicating strong predictive power. The statistically significant coefficients of the model are in Table 4 below:
-
 ```{r, message=FALSE, results='hide'}
-ResearchQ2Model <- lm(intgross_2013 ~ binary * genre + budget_2013 + year, data = movie_data)
+lm_mod_decade_code <- lm(intgross_2013 ~ binary * genre + budget_2013 + decade_code, data = movie_data)
 
-summary(ResearchQ2Model)
+summary(lm_mod_decade_code)
 
-plot(ResearchQ2Model)
+plot(lm_mod_decade_code)
 ```
 
 ```{r}
@@ -679,14 +678,22 @@ plot(ResearchQ2Model)
 
 movie_data$log_budget <- log(movie_data$budget_2013)
 movie_data$log_intgross <- log(movie_data$intgross_2013)
-log_lm_model <- lm(log_intgross ~ binary * genre + log_budget + year, data = movie_data)
+log_lm_model <- lm(log_intgross ~ binary * genre + log_budget + decade_code, data = movie_data)
 
 summary(log_lm_model)
 
 plot(log_lm_model)
 
 ```
+```{r}
+# Conduct a nested F test
 
+mod_full <- log_lm_model
+mod_reduced <- lm(log_intgross ~ binary + genre + log_budget + decade_code, data = movie_data)
+
+anova(mod_reduced, mod_full, test="F")
+```
+```
 
 
 ```{r, message=FALSE, results='hide'}
