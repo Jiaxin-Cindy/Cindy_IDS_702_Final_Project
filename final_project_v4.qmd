@@ -664,9 +664,36 @@ ggplot(data = data.frame(fitted = fitted(glm_model), residuals = residuals),
 
 ### 4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office
 
+```{r}
+# Plots research
+
+#Conduct Log Transformation
+
+movie_data$log_budget_2013 <- log(movie_data$budget_2013)
+movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
+
+# Budget vs International Gross Scatter Plot
+
+plot(movie_data$budget_2013, movie_data$intgross_2013, 
+     xlab = "Budget", 
+     ylab = "Log International Gross",
+     main = "Budget vs International Gross")
+
+# Log Transformed Budget vs Log International Gross Scatter Plot
+
+plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
+     xlab = "Budget", 
+     ylab = "Log International Gross",
+     main = "Budget vs Log International Gross")
+
+```
+
+
 To evaluate the factors influencing international gross revenue (adjusted to 2013 dollars), a linear regression model was fitted using Bechdel Test outcome (binary), budget, domestic gross revenue, decade, and genre as predictors. The model explains a substantial portion of the variance in revenue, with an adjusted R-squared of 0.9061, indicating strong predictive power. The statistically significant coefficients of the model are in Table 4 below:
+
+
 ```{r, message=FALSE, results='hide'}
-lm_mod_decade_code <- lm(intgross_2013 ~ binary * genre + budget_2013 + decade_code, data = movie_data)
+lm_mod_decade_code <- lm(intgross_2013 ~ binary * genre + budget_2013*binary + decade_code, data = movie_data)
 
 summary(lm_mod_decade_code)
 
@@ -676,9 +703,9 @@ plot(lm_mod_decade_code)
 ```{r}
 #Conduct Log Transformation
 
-movie_data$log_budget <- log(movie_data$budget_2013)
-movie_data$log_intgross <- log(movie_data$intgross_2013)
-log_lm_model <- lm(log_intgross ~ binary * genre + log_budget + decade_code, data = movie_data)
+movie_data$log_budget_2013 <- log(movie_data$budget_2013)
+movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
+log_lm_model <- lm(log_intgross_2013 ~ binary * genre + log_budget_2013*binary + decade_code, data = movie_data)
 
 summary(log_lm_model)
 
@@ -689,15 +716,15 @@ plot(log_lm_model)
 # Conduct a nested F test
 
 mod_full <- log_lm_model
-mod_reduced <- lm(log_intgross ~ binary + genre + log_budget + decade_code, data = movie_data)
+mod_reduced <- lm(log_intgross_2013 ~ binary + genre + log_budget_2013 + decade_code, data = movie_data)
 
 anova(mod_reduced, mod_full, test="F")
-```
 ```
 
 
 ```{r, message=FALSE, results='hide'}
-confint(ResearchQ2Model)
+confint(log_lm_model)
+
 ```
 
 ```{r, message=FALSE, results='hide'}
@@ -729,7 +756,7 @@ knitr::kable(
 # Updated per Andrea's feedback
 
 # Extract the model summary
-lm_summary <- summary(ResearchQ2Model)
+lm_summary <- summary(log_lm_model)
 
 # Create the data frame for the table
 results_table <- data.frame(
@@ -786,28 +813,6 @@ ggplot(movie_data, aes(x = intgross_2013_millions)) +
 
 ```
 
-**Figure 6:** International Gross Revenue by Bechdel Test Result, Colored by Genre
-
-```{r, fig.show='hide'}
-
-# Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
-movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
-
-# Scatter plot with genre coloring and Bechdel Test result on x-axis
-ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, color = genre)) +
-  geom_jitter(position = position_jitter(width = 0.2, height = 0), alpha = 0.7, size = 2) +
-  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
-  labs(
-    title = "",
-    x = "Bechdel Test Result",
-    y = "International Gross Revenue (2013 dollars, in millions)",
-    color = "Genre"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-```
-
 ```{r}
 # Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
 movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
@@ -825,7 +830,7 @@ ggplot(average_revenue, aes(x = genre, y = mean_revenue, fill = binary)) +
   labs(
     title = "Impact of Bechdel Test Result on Revenue by Genre",
     x = "Genre",
-    y = "Average International Gross Revenue (2013 dollars, in millions)",
+    y = "Average International Gross Revenue (Millions 2013 USD)",
     fill = "Bechdel Test Result"
   ) +
   theme_minimal() +
