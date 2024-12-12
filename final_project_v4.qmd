@@ -665,35 +665,121 @@ ggplot(data = data.frame(fitted = fitted(glm_model), residuals = residuals),
 ### 4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office
 
 ```{r}
-# Plots research
 
 #Conduct Log Transformation
 
 movie_data$log_budget_2013 <- log(movie_data$budget_2013)
 movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
+```
 
-# Budget vs International Gross Scatter Plot
+```{r}
+# Grouping by genre
 
+# Load required library
+library(RColorBrewer)
+
+# Create a color palette for genres (color-blind friendly)
+genres <- unique(movie_data$genre)
+genre_colors <- brewer.pal(min(length(genres), 8), "Set2")  # Use 'Set2' palette for up to 8 genres
+movie_data$genre_color <- genre_colors[as.numeric(movie_data$genre)]
+
+# Budget vs International Gross Scatter Plot (Colored by Genre)
 plot(movie_data$budget_2013, movie_data$intgross_2013, 
+     col = movie_data$genre_color, 
+     pch = 19, 
      xlab = "Budget", 
-     ylab = "Log International Gross",
-     main = "Budget vs International Gross")
+     ylab = "International Gross",
+     main = "Budget vs International Gross (Color-Blind Friendly)")
+
+legend("topleft", legend = levels(movie_data$genre), col = genre_colors, pch = 19)
 
 # Log Transformed Budget vs Log International Gross Scatter Plot
-
 plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
+     col = movie_data$genre_color, 
+     pch = 19,
+     xlab = "Log Budget", 
+     ylab = "Log International Gross",
+     main = "Log Budget vs Log International Gross (Color-Blind Friendly)")
+
+legend("topleft", legend = levels(movie_data$genre), col = genre_colors, pch = 19)
+
+# Budget vs Log International Gross Scatter Plot
+plot(movie_data$budget_2013, movie_data$log_intgross_2013, 
+     col = movie_data$genre_color, 
+     pch = 19,
      xlab = "Budget", 
      ylab = "Log International Gross",
-     main = "Budget vs Log International Gross")
+     main = "Budget vs Log International Gross (Color-Blind Friendly)")
+
+legend("topleft", legend = levels(movie_data$genre), col = genre_colors, pch = 19)
+
+# Log Budget vs International Gross Scatter Plot
+plot(movie_data$log_budget_2013, movie_data$intgross_2013, 
+     col = movie_data$genre_color, 
+     pch = 19,
+     xlab = "Log Budget", 
+     ylab = "International Gross",
+     main = "Log Budget vs International Gross (Color-Blind Friendly)")
+
+legend("topleft", legend = levels(movie_data$genre), col = genre_colors, pch = 19)
 
 ```
 
+```{r}
+# Grouping by decade code
 
+# Create a color palette for decade_code (color-blind friendly)
+decades <- unique(movie_data$decade_code)
+decade_colors <- brewer.pal(min(length(decades), 8), "Set2")  # Use 'Set2' palette
+movie_data$decade_color <- decade_colors[as.numeric(movie_data$decade_code)]
+
+# Budget vs International Gross Scatter Plot (Grouped by Decade)
+plot(movie_data$budget_2013, movie_data$intgross_2013, 
+     col = movie_data$decade_color, 
+     pch = 19, 
+     xlab = "Budget", 
+     ylab = "International Gross",
+     main = "Budget vs International Gross (Grouped by Decade)")
+
+legend("topleft", legend = levels(movie_data$decade_code), col = decade_colors, pch = 19)
+
+# Log Transformed Budget vs Log International Gross Scatter Plot
+plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
+     col = movie_data$decade_color, 
+     pch = 19,
+     xlab = "Log Budget", 
+     ylab = "Log International Gross",
+     main = "Log Budget vs Log International Gross (Grouped by Decade)")
+
+legend("topleft", legend = levels(movie_data$decade_code), col = decade_colors, pch = 19)
+
+# Budget vs Log International Gross Scatter Plot
+plot(movie_data$budget_2013, movie_data$log_intgross_2013, 
+     col = movie_data$decade_color, 
+     pch = 19,
+     xlab = "Budget", 
+     ylab = "Log International Gross",
+     main = "Budget vs Log International Gross (Grouped by Decade)")
+
+legend("topleft", legend = levels(movie_data$decade_code), col = decade_colors, pch = 19)
+
+# Log Budget vs International Gross Scatter Plot
+plot(movie_data$log_budget_2013, movie_data$intgross_2013, 
+     col = movie_data$decade_color, 
+     pch = 19,
+     xlab = "Log Budget", 
+     ylab = "International Gross",
+     main = "Log Budget vs International Gross (Grouped by Decade)")
+
+legend("topleft", legend = levels(movie_data$decade_code), col = decade_colors, pch = 19)
+
+
+```
 To evaluate the factors influencing international gross revenue (adjusted to 2013 dollars), a linear regression model was fitted using Bechdel Test outcome (binary), budget, domestic gross revenue, decade, and genre as predictors. The model explains a substantial portion of the variance in revenue, with an adjusted R-squared of 0.9061, indicating strong predictive power. The statistically significant coefficients of the model are in Table 4 below:
 
 
 ```{r, message=FALSE, results='hide'}
-lm_mod_decade_code <- lm(intgross_2013 ~ binary * genre + budget_2013*binary + decade_code, data = movie_data)
+lm_mod_decade_code <- lm(intgross_2013 ~ binary * genre + budget_2013 + decade_code, data = movie_data)
 
 summary(lm_mod_decade_code)
 
@@ -705,7 +791,7 @@ plot(lm_mod_decade_code)
 
 movie_data$log_budget_2013 <- log(movie_data$budget_2013)
 movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
-log_lm_model <- lm(log_intgross_2013 ~ binary * genre + log_budget_2013*binary + decade_code, data = movie_data)
+log_lm_model <- lm(log_intgross_2013 ~ binary * genre + log_budget_2013 + decade_code, data = movie_data)
 
 summary(log_lm_model)
 
