@@ -775,6 +775,57 @@ legend("topleft", legend = levels(movie_data$decade_code), col = decade_colors, 
 
 
 ```
+```{r}
+# Group by binary (pass fail bechdel)
+
+# Load required library
+library(RColorBrewer)
+
+# Create a color palette for binary (PASS/FAIL)
+binary_colors <- brewer.pal(3, "Set2")[1:2]  # Select two colors from the Set2 palette
+movie_data$binary_color <- binary_colors[as.numeric(movie_data$binary)]
+
+# Budget vs International Gross Scatter Plot (Colored by Binary)
+plot(movie_data$budget_2013, movie_data$intgross_2013, 
+     col = movie_data$binary_color, 
+     pch = 19, 
+     xlab = "Budget", 
+     ylab = "International Gross",
+     main = "Budget vs International Gross (Grouped by Binary)")
+
+legend("topleft", legend = levels(movie_data$binary), col = binary_colors, pch = 19)
+
+# Log Transformed Budget vs Log International Gross Scatter Plot
+plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
+     col = movie_data$binary_color, 
+     pch = 19,
+     xlab = "Log Budget", 
+     ylab = "Log International Gross",
+     main = "Log Budget vs Log International Gross (Grouped by Binary)")
+
+legend("topleft", legend = levels(movie_data$binary), col = binary_colors, pch = 19)
+
+# Budget vs Log International Gross Scatter Plot
+plot(movie_data$budget_2013, movie_data$log_intgross_2013, 
+     col = movie_data$binary_color, 
+     pch = 19,
+     xlab = "Budget", 
+     ylab = "Log International Gross",
+     main = "Budget vs Log International Gross (Grouped by Binary)")
+
+legend("topleft", legend = levels(movie_data$binary), col = binary_colors, pch = 19)
+
+# Log Budget vs International Gross Scatter Plot
+plot(movie_data$log_budget_2013, movie_data$intgross_2013, 
+     col = movie_data$binary_color, 
+     pch = 19,
+     xlab = "Log Budget", 
+     ylab = "International Gross",
+     main = "Log Budget vs International Gross (Grouped by Binary)")
+
+legend("topleft", legend = levels(movie_data$binary), col = binary_colors, pch = 19)
+
+```
 To evaluate the factors influencing international gross revenue (adjusted to 2013 dollars), a linear regression model was fitted using Bechdel Test outcome (binary), budget, domestic gross revenue, decade, and genre as predictors. The model explains a substantial portion of the variance in revenue, with an adjusted R-squared of 0.9061, indicating strong predictive power. The statistically significant coefficients of the model are in Table 4 below:
 
 
