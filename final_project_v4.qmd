@@ -672,8 +672,9 @@ movie_data$log_budget_2013 <- log(movie_data$budget_2013)
 movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
 ```
 
+
 ```{r}
-# Grouping by genre
+# Group By Genre
 
 # Load required library
 library(RColorBrewer)
@@ -681,7 +682,21 @@ library(RColorBrewer)
 # Create a color palette for genres (color-blind friendly)
 genres <- unique(movie_data$genre)
 genre_colors <- brewer.pal(min(length(genres), 8), "Set2")  # Use 'Set2' palette for up to 8 genres
-movie_data$genre_color <- genre_colors[as.numeric(movie_data$genre)]
+movie_data$genre_color <- genre_colors[as.numeric(factor(movie_data$genre))]
+
+# Function to add best fit lines for each genre
+add_best_fit_lines <- function(x, y, genre, data, colors) {
+  unique_genres <- unique(genre)
+  for (i in seq_along(unique_genres)) {
+    g <- unique_genres[i]
+    subset_data <- data[data$genre == g, ]
+    
+    if (nrow(subset_data) > 1) {  # At least two points are needed for regression
+      fit <- lm(subset_data[[y]] ~ subset_data[[x]])
+      abline(fit, col = colors[i], lwd = 2)
+    }
+  }
+}
 
 # Budget vs International Gross Scatter Plot (Colored by Genre)
 plot(movie_data$budget_2013, movie_data$intgross_2013, 
@@ -689,9 +704,10 @@ plot(movie_data$budget_2013, movie_data$intgross_2013,
      pch = 19, 
      xlab = "Budget", 
      ylab = "International Gross",
-     main = "Budget vs International Gross (Color-Blind Friendly)")
+     main = "Budget vs International Gross (by Genre)")
 
-legend("topleft", legend = levels(movie_data$genre), col = genre_colors, pch = 19)
+add_best_fit_lines("budget_2013", "intgross_2013", movie_data$genre, movie_data, genre_colors)
+legend("topleft", legend = levels(factor(movie_data$genre)), col = genre_colors, pch = 19)
 
 # Log Transformed Budget vs Log International Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
@@ -699,9 +715,10 @@ plot(movie_data$log_budget_2013, movie_data$log_intgross_2013,
      pch = 19,
      xlab = "Log Budget", 
      ylab = "Log International Gross",
-     main = "Log Budget vs Log International Gross (Color-Blind Friendly)")
+     main = "Log Budget vs Log International Gross (by Genre)")
 
-legend("topleft", legend = levels(movie_data$genre), col = genre_colors, pch = 19)
+add_best_fit_lines("log_budget_2013", "log_intgross_2013", movie_data$genre, movie_data, genre_colors)
+legend("bottomright", legend = levels(factor(movie_data$genre)), col = genre_colors, pch = 19)
 
 # Budget vs Log International Gross Scatter Plot
 plot(movie_data$budget_2013, movie_data$log_intgross_2013, 
@@ -709,9 +726,10 @@ plot(movie_data$budget_2013, movie_data$log_intgross_2013,
      pch = 19,
      xlab = "Budget", 
      ylab = "Log International Gross",
-     main = "Budget vs Log International Gross (Color-Blind Friendly)")
+     main = "Budget vs Log International Gross (by Genre)")
 
-legend("topleft", legend = levels(movie_data$genre), col = genre_colors, pch = 19)
+add_best_fit_lines("budget_2013", "log_intgross_2013", movie_data$genre, movie_data, genre_colors)
+legend("bottomright", legend = levels(factor(movie_data$genre)), col = genre_colors, pch = 19)
 
 # Log Budget vs International Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$intgross_2013, 
@@ -719,19 +737,34 @@ plot(movie_data$log_budget_2013, movie_data$intgross_2013,
      pch = 19,
      xlab = "Log Budget", 
      ylab = "International Gross",
-     main = "Log Budget vs International Gross (Color-Blind Friendly)")
+     main = "Log Budget vs International Gross (by Genre)")
 
-legend("topleft", legend = levels(movie_data$genre), col = genre_colors, pch = 19)
+add_best_fit_lines("log_budget_2013", "intgross_2013", movie_data$genre, movie_data, genre_colors)
+legend("topleft", legend = levels(factor(movie_data$genre)), col = genre_colors, pch = 19)
 
 ```
-
 ```{r}
-# Grouping by decade code
+# Load required library
+library(RColorBrewer)
 
 # Create a color palette for decade_code (color-blind friendly)
 decades <- unique(movie_data$decade_code)
 decade_colors <- brewer.pal(min(length(decades), 8), "Set2")  # Use 'Set2' palette
-movie_data$decade_color <- decade_colors[as.numeric(movie_data$decade_code)]
+movie_data$decade_color <- decade_colors[as.numeric(factor(movie_data$decade_code))]
+
+# Function to add trend lines for each decade
+add_trend_lines <- function(x, y, group, data, colors) {
+  unique_decades <- unique(group)
+  for (i in seq_along(unique_decades)) {
+    d <- unique_decades[i]
+    subset_data <- data[data$decade_code == d, ]
+    
+    if (nrow(subset_data) > 1) {  # At least two points are needed for regression
+      fit <- lm(subset_data[[y]] ~ subset_data[[x]])
+      abline(fit, col = colors[i], lwd = 2)
+    }
+  }
+}
 
 # Budget vs International Gross Scatter Plot (Grouped by Decade)
 plot(movie_data$budget_2013, movie_data$intgross_2013, 
@@ -739,9 +772,10 @@ plot(movie_data$budget_2013, movie_data$intgross_2013,
      pch = 19, 
      xlab = "Budget", 
      ylab = "International Gross",
-     main = "Budget vs International Gross (Grouped by Decade)")
+     main = "Budget vs International Gross (by Decade)")
 
-legend("topleft", legend = levels(movie_data$decade_code), col = decade_colors, pch = 19)
+add_trend_lines("budget_2013", "intgross_2013", movie_data$decade_code, movie_data, decade_colors)
+legend("topleft", legend = levels(factor(movie_data$decade_code)), col = decade_colors, pch = 19)
 
 # Log Transformed Budget vs Log International Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
@@ -749,9 +783,10 @@ plot(movie_data$log_budget_2013, movie_data$log_intgross_2013,
      pch = 19,
      xlab = "Log Budget", 
      ylab = "Log International Gross",
-     main = "Log Budget vs Log International Gross (Grouped by Decade)")
+     main = "Log Budget vs Log International Gross (by Decade)")
 
-legend("topleft", legend = levels(movie_data$decade_code), col = decade_colors, pch = 19)
+add_trend_lines("log_budget_2013", "log_intgross_2013", movie_data$decade_code, movie_data, decade_colors)
+legend("bottomright", legend = levels(factor(movie_data$decade_code)), col = decade_colors, pch = 19)
 
 # Budget vs Log International Gross Scatter Plot
 plot(movie_data$budget_2013, movie_data$log_intgross_2013, 
@@ -759,9 +794,10 @@ plot(movie_data$budget_2013, movie_data$log_intgross_2013,
      pch = 19,
      xlab = "Budget", 
      ylab = "Log International Gross",
-     main = "Budget vs Log International Gross (Grouped by Decade)")
+     main = "Budget vs Log International Gross (by Decade)")
 
-legend("topleft", legend = levels(movie_data$decade_code), col = decade_colors, pch = 19)
+add_trend_lines("budget_2013", "log_intgross_2013", movie_data$decade_code, movie_data, decade_colors)
+legend("bottomright", legend = levels(factor(movie_data$decade_code)), col = decade_colors, pch = 19)
 
 # Log Budget vs International Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$intgross_2013, 
@@ -769,21 +805,33 @@ plot(movie_data$log_budget_2013, movie_data$intgross_2013,
      pch = 19,
      xlab = "Log Budget", 
      ylab = "International Gross",
-     main = "Log Budget vs International Gross (Grouped by Decade)")
+     main = "Log Budget vs International Gross (by Decade)")
 
-legend("topleft", legend = levels(movie_data$decade_code), col = decade_colors, pch = 19)
-
+add_trend_lines("log_budget_2013", "intgross_2013", movie_data$decade_code, movie_data, decade_colors)
+legend("topleft", legend = levels(factor(movie_data$decade_code)), col = decade_colors, pch = 19)
 
 ```
 ```{r}
-# Group by binary (pass fail bechdel)
-
 # Load required library
 library(RColorBrewer)
 
 # Create a color palette for binary (PASS/FAIL)
 binary_colors <- brewer.pal(3, "Set2")[1:2]  # Select two colors from the Set2 palette
-movie_data$binary_color <- binary_colors[as.numeric(movie_data$binary)]
+movie_data$binary_color <- binary_colors[as.numeric(factor(movie_data$binary))]
+
+# Function to add trend lines for each binary group
+add_trend_lines <- function(x, y, group, data, colors) {
+  unique_groups <- unique(group)
+  for (i in seq_along(unique_groups)) {
+    g <- unique_groups[i]
+    subset_data <- data[data$binary == g, ]
+    
+    if (nrow(subset_data) > 1) {  # At least two points are needed for regression
+      fit <- lm(subset_data[[y]] ~ subset_data[[x]])
+      abline(fit, col = colors[i], lwd = 2)
+    }
+  }
+}
 
 # Budget vs International Gross Scatter Plot (Colored by Binary)
 plot(movie_data$budget_2013, movie_data$intgross_2013, 
@@ -791,9 +839,10 @@ plot(movie_data$budget_2013, movie_data$intgross_2013,
      pch = 19, 
      xlab = "Budget", 
      ylab = "International Gross",
-     main = "Budget vs International Gross (Grouped by Binary)")
+     main = "Budget vs International Gross (by Bechdel Result)")
 
-legend("topleft", legend = levels(movie_data$binary), col = binary_colors, pch = 19)
+add_trend_lines("budget_2013", "intgross_2013", movie_data$binary, movie_data, binary_colors)
+legend("topleft", legend = levels(factor(movie_data$binary)), col = binary_colors, pch = 19)
 
 # Log Transformed Budget vs Log International Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
@@ -801,9 +850,10 @@ plot(movie_data$log_budget_2013, movie_data$log_intgross_2013,
      pch = 19,
      xlab = "Log Budget", 
      ylab = "Log International Gross",
-     main = "Log Budget vs Log International Gross (Grouped by Binary)")
+     main = "Log Budget vs Log International Gross (by Bechdel Result)")
 
-legend("topleft", legend = levels(movie_data$binary), col = binary_colors, pch = 19)
+add_trend_lines("log_budget_2013", "log_intgross_2013", movie_data$binary, movie_data, binary_colors)
+legend("bottomright", legend = levels(factor(movie_data$binary)), col = binary_colors, pch = 19)
 
 # Budget vs Log International Gross Scatter Plot
 plot(movie_data$budget_2013, movie_data$log_intgross_2013, 
@@ -811,9 +861,10 @@ plot(movie_data$budget_2013, movie_data$log_intgross_2013,
      pch = 19,
      xlab = "Budget", 
      ylab = "Log International Gross",
-     main = "Budget vs Log International Gross (Grouped by Binary)")
+     main = "Budget vs Log International Gross (by Bechdel Result)")
 
-legend("topleft", legend = levels(movie_data$binary), col = binary_colors, pch = 19)
+add_trend_lines("budget_2013", "log_intgross_2013", movie_data$binary, movie_data, binary_colors)
+legend("bottomright", legend = levels(factor(movie_data$binary)), col = binary_colors, pch = 19)
 
 # Log Budget vs International Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$intgross_2013, 
@@ -821,11 +872,13 @@ plot(movie_data$log_budget_2013, movie_data$intgross_2013,
      pch = 19,
      xlab = "Log Budget", 
      ylab = "International Gross",
-     main = "Log Budget vs International Gross (Grouped by Binary)")
+     main = "Log Budget vs International Gross (by Bechdel Result)")
 
-legend("topleft", legend = levels(movie_data$binary), col = binary_colors, pch = 19)
+add_trend_lines("log_budget_2013", "intgross_2013", movie_data$binary, movie_data, binary_colors)
+legend("topleft", legend = levels(factor(movie_data$binary)), col = binary_colors, pch = 19)
 
 ```
+
 To evaluate the factors influencing international gross revenue (adjusted to 2013 dollars), a linear regression model was fitted using Bechdel Test outcome (binary), budget, domestic gross revenue, decade, and genre as predictors. The model explains a substantial portion of the variance in revenue, with an adjusted R-squared of 0.9061, indicating strong predictive power. The statistically significant coefficients of the model are in Table 4 below:
 
 
