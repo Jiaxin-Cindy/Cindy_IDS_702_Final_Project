@@ -134,6 +134,10 @@ movie_data <- movie_data %>%
   )
 
 movie_data <- na.omit(movie_data)
+
+max_row <- which.max(movie_data$budget_2013)
+# Drop that row
+movie_data <- movie_data[-max_row, ]
 nrow(movie_data)
 ```
 
@@ -152,6 +156,9 @@ Model performance was evaluated using the Akaike Information Criterion (AIC), wi
 **Linear Regression for International Box Office Revenue:** To address the second question, linear regression was applied to model a movie’s international box office revenue. Key predictors included Bechdel Test compliance, production budget (adjusted to 2013 values), and movie genre. Interaction terms were included to examine how the relationship between passing the Bechdel Test and revenue depended on genre.
 
 Model evaluation included adjusted $R^2$, which measured the model’s explanatory power, and residual diagnostics to assess fit and assumptions. Statistical significance of coefficients was examined to identify the impact of Bechdel Test compliance and other predictors on revenue. Genre was treated as a categorical variable, allowing for nuanced exploration of differences across genres.
+
+```{}
+```
 
 # 4. Results
 
@@ -406,6 +413,7 @@ knitr::kable(
 ```{r, fig.show='hide'}
 # Figure 1: Budget Distribution by Decade (2013, Millions USD)
 
+
 # Box plot for Budget Distribution by Decade with budget in millions
 ggplot(movie_data, aes(x = as.factor(decade_code), y = budget_2013 / 1e6, fill = as.factor(decade_code))) +
   geom_boxplot() +
@@ -444,9 +452,14 @@ ggplot(movie_data, aes(x = budget_2013_millions, y = predicted_prob, color = dec
   ) +
   theme_minimal(base_size = 14)  # Clean and professional theme
 
+plot(glm_model)
+
 ```
 
+```{r}
+plot(glm_model)
 
+```
 
 **Figure 1:** Effect of Budget on Bechdel Test Outcome
 
@@ -472,15 +485,15 @@ ggplot(new_data, aes(x = budget_millions, y = predicted_prob)) +
   )
 
 ```
-Interpretation:
-The plot shows that the 1980s ('80-'89) display a different trend compared to other decades in the relationship between budget and the predicted probability of passing the Bechdel Test. The following is how we dig into the different trend:
 
+Interpretation: The plot shows that the 1980s ('80-'89) display a different trend compared to other decades in the relationship between budget and the predicted probability of passing the Bechdel Test. The following is how we dig into the different trend:
 
 ```{r, message=FALSE}
 # Check the sample size of movies for the 1980s:
 movies_80s <- movie_data %>% filter(decade_code == "'80-'89")
 nrow(movies_80s)
 ```
+
 Given that the sample size for the 1980s is 123 out of a total of 1776 movies, this represents about 7% of the total dataset. This relatively small proportion could be influencing the unusual trend in the 1980s panel.
 
 ```{r, message=FALSE}
@@ -543,8 +556,8 @@ print(proportion_data)
 
 
 ```
-The 1980s ('80-'89) have the highest proportion of Action movies at 34.15%. This genre distribution helps explain why the trend for the 1980s differs from other decades in the plot of Budget vs. Predicted Bechdel Test Probability. Since Action movies dominate in this period and are less likely to pass the test, the predicted probabilities are skewed lower compared to other decades with more balanced genre distributions.
 
+The 1980s ('80-'89) have the highest proportion of Action movies at 34.15%. This genre distribution helps explain why the trend for the 1980s differs from other decades in the plot of Budget vs. Predicted Bechdel Test Probability. Since Action movies dominate in this period and are less likely to pass the test, the predicted probabilities are skewed lower compared to other decades with more balanced genre distributions.
 
 ```{r, message=FALSE}
 # Pre-transform budget to millions
@@ -695,7 +708,6 @@ movie_data$log_budget_2013 <- log(movie_data$budget_2013)
 movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
 ```
 
-
 ```{r}
 # Group By Genre
 
@@ -734,6 +746,7 @@ legend("bottomright", legend = levels(factor(movie_data$genre)), col = genre_col
 
 
 ```
+
 ```{r}
 # Load required library
 library(RColorBrewer)
@@ -771,6 +784,7 @@ legend("bottomright", legend = levels(factor(movie_data$decade_code)), col = dec
 
 
 ```
+
 ```{r}
 # Load required library
 library(RColorBrewer)
@@ -810,7 +824,6 @@ legend("bottomright", legend = levels(factor(movie_data$binary)), col = binary_c
 
 To evaluate the factors influencing international gross revenue (adjusted to 2013 dollars), a linear regression model was fitted using Bechdel Test outcome (binary), budget, domestic gross revenue, decade, and genre as predictors. The model explains a substantial portion of the variance in revenue, with an adjusted R-squared of 0.9061, indicating strong predictive power. The statistically significant coefficients of the model are in Table 4 below:
 
-
 ```{r, message=FALSE, results='hide', fig.show='hide'}
 lm_mod_decade_code <- lm(intgross_2013 ~ binary * genre + budget_2013 + domgross_2013 + decade_code, data = movie_data)
 
@@ -832,6 +845,7 @@ summary(log_lm_model)
 plot(log_lm_model)
 
 ```
+
 ```{r}
 # Conduct a nested F test
 
@@ -841,7 +855,6 @@ mod_reduced <- lm(log_intgross_2013 ~ binary + genre + log_budget_2013 + decade_
 anova(mod_reduced, mod_full, test="F")
 
 ```
-
 
 ```{r, message=FALSE, results='hide'}
 confint(log_lm_model)
@@ -985,9 +998,8 @@ ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, fill = binary)) +
 
 ```
 
-
 ```{r, message=FALSE, results='hide'}
-#vif(ResearchQ2Model)
+vif(log_lm_model)
 ```
 
 Cook’s Distance was evaluated to detect any extreme values in the data. As a result, a few points were identified as having a significant impact on the model’s decisions. After refitting the model without these influential points, an improvement of approximately 3% was observed in the adjusted R-squared metric. Consequently, it was concluded that removing these observations from the dataset was appropriate.
@@ -1009,14 +1021,17 @@ abline(h = threshold, col = "red", lty = 2)
 
 influential_indices <- which(cooks_distances > threshold)
 points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
+
+
 ```
 
-```{r, message=FALSE, results='hide'}
+```{r}
+# Log model without outliers
+
 movie_data_no_influential <- movie_data[-influential_points, ]
-ResearchQ2ModelWithoutExtreme <- lm(intgross_2013 ~ + binary + genre  + budget_2013 + decade_code  , data = movie_data_no_influential)
-
-summary(ResearchQ2ModelWithoutExtreme)
-
+lm_log_model_without_extreme <- lm(log_intgross_2013 ~ binary * genre + log_budget_2013 + decade_code, data = movie_data_no_influential)
+summary(lm_log_model_without_extreme)
+```
 
 # 5. Conclusion
 
