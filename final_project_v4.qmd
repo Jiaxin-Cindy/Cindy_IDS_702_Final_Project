@@ -1,6 +1,6 @@
 ---
 title: "Analyzing the Bechdel Test: Budget Trends and Revenue Outcomes in Cinema"
-author: "Alex Ackeman, Cindy Gao, Kayla Haeussler, Javidan Karimli"
+author: "Alex Ackerman, Cindy Gao, Kayla Haeussler, Javidan Karimli"
 subtitle: "December 15th 2024"
 format: pdf
 header-includes:
@@ -909,6 +909,7 @@ mod_full <- log_lm_model
 mod_reduced <- lm(log_intgross_2013 ~ binary + genre + log_budget_2013 + decade_code, data = movie_data)
 
 anova(mod_reduced, mod_full, test="F")
+
 ```
 
 
@@ -1056,7 +1057,7 @@ ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, fill = binary)) +
 
 
 ```{r, message=FALSE, results='hide'}
-vif(ResearchQ2Model)
+#vif(ResearchQ2Model)
 ```
 
 Cook’s Distance was evaluated to detect any extreme values in the data. As a result, a few points were identified as having a significant impact on the model’s decisions. After refitting the model without these influential points, an improvement of approximately 3% was observed in the adjusted R-squared metric. Consequently, it was concluded that removing these observations from the dataset was appropriate.
@@ -1065,7 +1066,7 @@ The **Year** column was found to cause multicollinearity in the fitted model and
 
 **Figure 7:** Cook's Distance
 
-```{r, message=FALSE}
+
 cooks_distances <- cooks.distance(ResearchQ2Model)
 n <- nrow(movie_data)
 threshold <- 4 / n
@@ -1078,14 +1079,14 @@ abline(h = threshold, col = "red", lty = 2)
 
 influential_indices <- which(cooks_distances > threshold)
 points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
-```
 
-```{r, message=FALSE, results='hide'}
+
+{r, message=FALSE, results='hide'}
 movie_data_no_influential <- movie_data[-influential_points, ]
 ResearchQ2ModelWithoutExtreme <- lm(intgross_2013 ~ + binary + genre  + budget_2013 + decade_code  , data = movie_data_no_influential)
 
 summary(ResearchQ2ModelWithoutExtreme)
-```
+
 
 # 5. Conclusion
 
