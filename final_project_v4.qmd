@@ -298,7 +298,7 @@ movie_data <- movie_data %>%
 head(movie_data)
 
 # Construct the logistic regression model
-glm_model <- glm(binary ~ budget_2013 * decade_code + genre + domgross_2013 + intgross_2013, data = movie_data, family = "binomial")
+glm_model <- glm(binary ~ budget_2013 + decade_code + genre + domgross_2013 + intgross_2013, data = movie_data, family = "binomial")
 
 # Summary of the model
 summary(glm_model)
@@ -424,6 +424,29 @@ ggplot(movie_data, aes(x = as.factor(decade_code), y = budget_2013 / 1e6, fill =
 ```
 
 To further explore these trends, Figures 1, 2, and 3 provide additional context. Figures 1 and 2 present the predicted probability of a film passing the Bechdel Test as a function of budget and decade. Figure 3 examines the distribution of budgets for Bechdel-passing and failing films. Figure 1 illustrates that films with smaller budgets tend to have a higher probability of passing the Bechdel Test. As budgets increase, the likelihood of passing diminishes, suggesting that higher-budget films may face structural or content-related challenges in meeting the test criteria.
+
+```{r}
+# TEST
+
+library(ggplot2)
+library(dplyr)
+
+# Plot with colorblind-friendly colors
+ggplot(movie_data, aes(x = budget_2013_millions, y = predicted_prob, color = decade_code)) +
+  geom_point(alpha = 0.7) +  # Scatter points with transparency
+  geom_smooth(method = "loess", se = TRUE, color = "black") +  # Trend line
+  scale_color_viridis_d(option = "C", begin = 0.1, end = 0.9) +  # Colorblind-friendly palette
+  labs(
+    title = "Predicted Probability vs Budget by Decade",
+    x = "Budget (2013, in Millions USD)",
+    y = "Predicted Probability of Passing Bechdel Test",
+    color = "Decade"
+  ) +
+  theme_minimal(base_size = 14)  # Clean and professional theme
+
+```
+
+
 
 **Figure 1:** Effect of Budget on Bechdel Test Outcome
 
@@ -698,17 +721,6 @@ add_best_fit_lines <- function(x, y, genre, data, colors) {
   }
 }
 
-# Budget vs International Gross Scatter Plot (Colored by Genre)
-plot(movie_data$budget_2013, movie_data$intgross_2013, 
-     col = movie_data$genre_color, 
-     pch = 19, 
-     xlab = "Budget", 
-     ylab = "International Gross",
-     main = "Budget vs International Gross (by Genre)")
-
-add_best_fit_lines("budget_2013", "intgross_2013", movie_data$genre, movie_data, genre_colors)
-legend("topleft", legend = levels(factor(movie_data$genre)), col = genre_colors, pch = 19)
-
 # Log Transformed Budget vs Log International Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
      col = movie_data$genre_color, 
@@ -720,27 +732,6 @@ plot(movie_data$log_budget_2013, movie_data$log_intgross_2013,
 add_best_fit_lines("log_budget_2013", "log_intgross_2013", movie_data$genre, movie_data, genre_colors)
 legend("bottomright", legend = levels(factor(movie_data$genre)), col = genre_colors, pch = 19)
 
-# Budget vs Log International Gross Scatter Plot
-plot(movie_data$budget_2013, movie_data$log_intgross_2013, 
-     col = movie_data$genre_color, 
-     pch = 19,
-     xlab = "Budget", 
-     ylab = "Log International Gross",
-     main = "Budget vs Log International Gross (by Genre)")
-
-add_best_fit_lines("budget_2013", "log_intgross_2013", movie_data$genre, movie_data, genre_colors)
-legend("bottomright", legend = levels(factor(movie_data$genre)), col = genre_colors, pch = 19)
-
-# Log Budget vs International Gross Scatter Plot
-plot(movie_data$log_budget_2013, movie_data$intgross_2013, 
-     col = movie_data$genre_color, 
-     pch = 19,
-     xlab = "Log Budget", 
-     ylab = "International Gross",
-     main = "Log Budget vs International Gross (by Genre)")
-
-add_best_fit_lines("log_budget_2013", "intgross_2013", movie_data$genre, movie_data, genre_colors)
-legend("topleft", legend = levels(factor(movie_data$genre)), col = genre_colors, pch = 19)
 
 ```
 ```{r}
@@ -766,16 +757,6 @@ add_trend_lines <- function(x, y, group, data, colors) {
   }
 }
 
-# Budget vs International Gross Scatter Plot (Grouped by Decade)
-plot(movie_data$budget_2013, movie_data$intgross_2013, 
-     col = movie_data$decade_color, 
-     pch = 19, 
-     xlab = "Budget", 
-     ylab = "International Gross",
-     main = "Budget vs International Gross (by Decade)")
-
-add_trend_lines("budget_2013", "intgross_2013", movie_data$decade_code, movie_data, decade_colors)
-legend("topleft", legend = levels(factor(movie_data$decade_code)), col = decade_colors, pch = 19)
 
 # Log Transformed Budget vs Log International Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
@@ -788,27 +769,6 @@ plot(movie_data$log_budget_2013, movie_data$log_intgross_2013,
 add_trend_lines("log_budget_2013", "log_intgross_2013", movie_data$decade_code, movie_data, decade_colors)
 legend("bottomright", legend = levels(factor(movie_data$decade_code)), col = decade_colors, pch = 19)
 
-# Budget vs Log International Gross Scatter Plot
-plot(movie_data$budget_2013, movie_data$log_intgross_2013, 
-     col = movie_data$decade_color, 
-     pch = 19,
-     xlab = "Budget", 
-     ylab = "Log International Gross",
-     main = "Budget vs Log International Gross (by Decade)")
-
-add_trend_lines("budget_2013", "log_intgross_2013", movie_data$decade_code, movie_data, decade_colors)
-legend("bottomright", legend = levels(factor(movie_data$decade_code)), col = decade_colors, pch = 19)
-
-# Log Budget vs International Gross Scatter Plot
-plot(movie_data$log_budget_2013, movie_data$intgross_2013, 
-     col = movie_data$decade_color, 
-     pch = 19,
-     xlab = "Log Budget", 
-     ylab = "International Gross",
-     main = "Log Budget vs International Gross (by Decade)")
-
-add_trend_lines("log_budget_2013", "intgross_2013", movie_data$decade_code, movie_data, decade_colors)
-legend("topleft", legend = levels(factor(movie_data$decade_code)), col = decade_colors, pch = 19)
 
 ```
 ```{r}
@@ -833,16 +793,6 @@ add_trend_lines <- function(x, y, group, data, colors) {
   }
 }
 
-# Budget vs International Gross Scatter Plot (Colored by Binary)
-plot(movie_data$budget_2013, movie_data$intgross_2013, 
-     col = movie_data$binary_color, 
-     pch = 19, 
-     xlab = "Budget", 
-     ylab = "International Gross",
-     main = "Budget vs International Gross (by Bechdel Result)")
-
-add_trend_lines("budget_2013", "intgross_2013", movie_data$binary, movie_data, binary_colors)
-legend("topleft", legend = levels(factor(movie_data$binary)), col = binary_colors, pch = 19)
 
 # Log Transformed Budget vs Log International Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
@@ -855,35 +805,14 @@ plot(movie_data$log_budget_2013, movie_data$log_intgross_2013,
 add_trend_lines("log_budget_2013", "log_intgross_2013", movie_data$binary, movie_data, binary_colors)
 legend("bottomright", legend = levels(factor(movie_data$binary)), col = binary_colors, pch = 19)
 
-# Budget vs Log International Gross Scatter Plot
-plot(movie_data$budget_2013, movie_data$log_intgross_2013, 
-     col = movie_data$binary_color, 
-     pch = 19,
-     xlab = "Budget", 
-     ylab = "Log International Gross",
-     main = "Budget vs Log International Gross (by Bechdel Result)")
-
-add_trend_lines("budget_2013", "log_intgross_2013", movie_data$binary, movie_data, binary_colors)
-legend("bottomright", legend = levels(factor(movie_data$binary)), col = binary_colors, pch = 19)
-
-# Log Budget vs International Gross Scatter Plot
-plot(movie_data$log_budget_2013, movie_data$intgross_2013, 
-     col = movie_data$binary_color, 
-     pch = 19,
-     xlab = "Log Budget", 
-     ylab = "International Gross",
-     main = "Log Budget vs International Gross (by Bechdel Result)")
-
-add_trend_lines("log_budget_2013", "intgross_2013", movie_data$binary, movie_data, binary_colors)
-legend("topleft", legend = levels(factor(movie_data$binary)), col = binary_colors, pch = 19)
 
 ```
 
 To evaluate the factors influencing international gross revenue (adjusted to 2013 dollars), a linear regression model was fitted using Bechdel Test outcome (binary), budget, domestic gross revenue, decade, and genre as predictors. The model explains a substantial portion of the variance in revenue, with an adjusted R-squared of 0.9061, indicating strong predictive power. The statistically significant coefficients of the model are in Table 4 below:
 
 
-```{r, message=FALSE, results='hide'}
-lm_mod_decade_code <- lm(intgross_2013 ~ binary * genre + budget_2013 + decade_code, data = movie_data)
+```{r, message=FALSE, results='hide', fig.show='hide'}
+lm_mod_decade_code <- lm(intgross_2013 ~ binary * genre + budget_2013 + domgross_2013 + decade_code, data = movie_data)
 
 summary(lm_mod_decade_code)
 
@@ -895,7 +824,8 @@ plot(lm_mod_decade_code)
 
 movie_data$log_budget_2013 <- log(movie_data$budget_2013)
 movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
-log_lm_model <- lm(log_intgross_2013 ~ binary * genre + log_budget_2013 + decade_code, data = movie_data)
+
+log_lm_model <- lm(log_intgross_2013 ~ binary * genre + log_budget_2013  + decade_code, data = movie_data)
 
 summary(log_lm_model)
 
@@ -1066,8 +996,8 @@ The **Year** column was found to cause multicollinearity in the fitted model and
 
 **Figure 7:** Cook's Distance
 
-
-cooks_distances <- cooks.distance(ResearchQ2Model)
+```{r}
+cooks_distances <- cooks.distance(log_lm_model)
 n <- nrow(movie_data)
 threshold <- 4 / n
 influential_points <- which(cooks_distances > threshold)
@@ -1079,9 +1009,9 @@ abline(h = threshold, col = "red", lty = 2)
 
 influential_indices <- which(cooks_distances > threshold)
 points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
+```
 
-
-{r, message=FALSE, results='hide'}
+```{r, message=FALSE, results='hide'}
 movie_data_no_influential <- movie_data[-influential_points, ]
 ResearchQ2ModelWithoutExtreme <- lm(intgross_2013 ~ + binary + genre  + budget_2013 + decade_code  , data = movie_data_no_influential)
 
