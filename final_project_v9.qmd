@@ -500,7 +500,7 @@ ggplot(average_revenue, aes(x = genre, y = mean_revenue, fill = binary)) +
   labs(
     #title = "Impact of Bechdel Test Result on Revenue by Genre",
     x = "Genre",
-    y = "Avg. Int. Gross Revenue (Millions 2013 USD)",
+    y = "Avg. WorldWide Gross Revenue (Millions 2013 USD)",
     fill = "Bechdel Test Result"
   ) +
   theme_minimal() +
@@ -528,7 +528,7 @@ anova(mod_reduced, mod_full, test="F")
 
 ```
 
-Now that it was determined an interaction term would not be included, we moved forward with the variables of Bechdel test outcome, genre, budget and decade code in our model. This linear model was created, but creation of diagnostic plots revealed a fanning pattern in the residuals vs. fitted plots as well as significant deviation from teh theoretical quantile line in the QQ-plot, indicating the presence of heteroscedasticity and non-normal distribution of the residuals respectively. In order to combat this, we performed a logarithmic transformation on the numerical variables in our model, worldwide revenue and budget. This transformation dramatically improved the previous issues seen in the diagnostic plots. As seen in figure LKDWJHLAKJNDJKLFN below the Residuals vs. Fitted plot reveals a reasonable scatter around zero, though slight heteroscedasticity at higher fitted values indicates possible variability in error variance. The Q-Q plot demonstrates approximate normality of residuals, with minor deviations in the tails suggesting some outliers or non-normal behavior. These diagnostics indicate the model is well-specified, though further refinement may improve robustness.
+Now that it was determined an interaction term would not be included, we moved forward with the variables of Bechdel test outcome, genre, budget and decade code in our model. This linear model was created, but creation of diagnostic plots revealed a fanning pattern in the residuals vs. fitted plots as well as significant deviation from the theoretical quantile line in the QQ-plot, indicating the presence of heteroscedasticity and non-normal distribution of the residuals respectively. In order to combat this, we performed a logarithmic transformation on the numerical variables in our model, worldwide revenue and budget. This transformation dramatically improved the previous issues seen in the diagnostic plots. As seen in figure 3 below the Residuals vs. Fitted plot reveals a reasonable scatter around zero, though slight heteroscedasticity at higher fitted values indicates possible variability in error variance. The Q-Q plot demonstrates approximate normality of residuals, with minor deviations in the tails suggesting some outliers or non-normal behavior. These diagnostics indicate the model is well-specified, though further refinement may improve robustness.
 
 ```{r, message=FALSE,results='hide',fig.show='hide'}
 lm_mod_decade_code <- lm(intgross_2013 ~ binary + genre + budget_2013  + decade_code, data = movie_data)
@@ -537,6 +537,7 @@ summary(lm_mod_decade_code)
 
 plot(lm_mod_decade_code)
 ```
+**Figure 3:  Regression model diagnostics plot**
 
 ```{r,  message=FALSE, results='hide'}
 
@@ -562,7 +563,7 @@ plot(log_lm_model, which = 2)  # 'which = 2' corresponds to the Normal Q-Q plot
 par(mfrow = c(1, 1))
 ```
 
-Our final linear model yielded the following results, shown in figure KJAHJDBAKJKJ below
+Our final linear model yielded the following results, shown in table 4  below
 
 ```{r}
 # Extract summary information
@@ -615,6 +616,8 @@ knitr::kable(
 
 The linear regression model reveals that the natural log of a movie’s budget is the strongest predictor of international gross revenue, with a highly significant positive association (estimate = 0.895, p \< 0.001). Among genres, horror movies significantly outperform the reference genre (estimate = 0.672, p \< 0.001), while dramas show a modest but significant negative impact (estimate = -0.186, p = 0.026). Passing the Bechdel Test does not significantly influence revenue (estimate = -0.056, p = 0.368), suggesting no clear relationship between gender representation and financial success in this model. Decade effects indicate a steady decline in international gross revenue over time, with the 2000s (estimate = -1.318, p \< 0.001) and 2010s (estimate = -1.234, p \< 0.001) showing the largest negative associations. These findings highlight budget, genre, and decade as key factors in predicting international gross revenue.
 
+
+**Figure 4: Cook's Distance**
 ```{r}
 cooks_distances <- cooks.distance(log_lm_model)
 n <- nrow(movie_data)
@@ -639,7 +642,7 @@ summary(mod_reduced_without_extreme)
 summary(mod_reduced)
 ```
 
-Cook’s Distance was evaluated to detect any extreme values in the data. As a result, a 4 points were identified as having a significant impact on the model’s decisions. After refitting the model without these influential points, an improvement of approximately 1% was observed in the adjusted R-squared metric. Consequently, it was concluded that removing these observations from the dataset was not appropriate. Additionally, multicollinearity among the variables was assessed, and the Variance Inflation Factor (VIF) scores for all variables were found to be very close to 1, indicating the absence of multicollinearity issues in the final model.
+Cook’s Distance was evaluated to detect any extreme values in the data. As a result, four points were identified as having a significant impact on the model’s decisions, as shown in Figure 4. After refitting the model without these influential points, an improvement of approximately 1% was observed in the adjusted R-squared metric. Consequently, it was concluded that removing these observations from the dataset was not appropriate. Additionally, multicollinearity among the variables was assessed, and the Variance Inflation Factor (VIF) scores for all variables were found to be very close to 1, indicating the absence of multicollinearity issues in the final model.
 
 ```{r, message=FALSE, results='hide'}
 # Create a data frame for the table
@@ -739,8 +742,7 @@ vif(log_lm_model)
 
 **5. Conclusion**
 
-This study provides insights into the financial outcomes of films passing the Bechdel Test. Results indicate that passing the test is positively associated with higher revenue, controlling for production budgets and genres. Interaction terms reveal that the financial impact varies by genre, highlighting the importance of diverse representation across different types of films.
-
+This study provides insights into the likelihood of passing the Bechdel Test and its relationship with movie budgets, as well as differences in worldwide box office revenue between movies that pass or fail the test. Using the FiveThirtyEight dataset and supplemental IMDb movie details, key insights were revealed, highlighting the connection between gender representation and financial investments in the film industry. The analysis shows that passing the Bechdel Test is influenced by factors such as the movie’s budget, production decade, and its classification as an Action or Horror genre. In terms of worldwide revenue, a positive relationship was observed with production decades and the prominence of Horror and Drama genres. However, the research also revealed that the results of the Bechdel Test are not significantly associated with worldwide revenue, indicating not significant relationship between gender representation and financial success.
 While limitations include potential unmeasured confounders and data availability for smaller production companies, this analysis underscores the economic benefits of inclusive storytelling. Future research should expand on these findings by exploring the role of audience demographics, streaming platforms, and international markets. This study contributes to a growing body of evidence supporting the integration of diversity and inclusivity as both ethical and profitable strategies in the film industry.
 
 **6. References**
