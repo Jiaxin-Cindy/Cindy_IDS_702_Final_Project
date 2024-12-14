@@ -441,9 +441,37 @@ movie_data$log_budget_2013 <- log(movie_data$budget_2013)
 movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
 ```
 
-**Figure 2: Log Budget vs Log International Gross (by Genre)**
+**Figure 2: Impact of Bechdel Test Result on Revenue by Genre**
 
-```{r}
+```{r, message=FALSE}
+# Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
+movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
+
+# Calculate average revenue by Bechdel Test result (binary) and genre
+average_revenue <- movie_data %>%
+  group_by(binary, genre) %>%
+  summarise(mean_revenue = mean(intgross_2013_millions, na.rm = TRUE)) %>%
+  ungroup()
+
+# Grouped bar chart
+ggplot(average_revenue, aes(x = genre, y = mean_revenue, fill = binary)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
+  labs(
+    title = "Impact of Bechdel Test Result on Revenue by Genre",
+    x = "Genre",
+    y = "Avg. Int. Gross Revenue (Millions 2013 USD)",
+    fill = "Bechdel Test Result"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+  )
+
+```
+
+```{r, message=FALSE, fig.show='hide'}
 # Group By Genre
 
 # Load required library
@@ -487,6 +515,22 @@ legend("bottom", legend = levels(factor(movie_data$genre)),
        bty = "n",     # Remove the box around the legend
    )  # Adjust position slightly outside the plot area
 
+```
+
+**Figure 3: Log International Gross by Genre and Passing Test**
+
+```{r, fig.show='hide'}
+# Interaction plot with ggplot
+interaction_plot <- ggplot(movie_data, aes(x = binary, y = log_intgross_2013, fill = genre)) +
+  geom_boxplot() +
+  labs(
+    title = "International Gross by Genre and Passing Test",
+    x = "Passing Test",
+    y = "International Gross"
+  ) +
+  theme_minimal()
+
+print(interaction_plot)
 ```
 
 ```{r, fig.show='hide'}
@@ -566,7 +610,7 @@ legend("bottomright", legend = levels(factor(movie_data$binary)), col = binary_c
 
 The regression analysis reveals that the log-transformed production budget was the strongest predictor of international revenue ($\hat{\beta}=0.89544, p<0.001$, indicating a nearly proportional relationship between budget and revenue. Among genres, horror films earned significantly higher revenues compared to the baseline genre ($\hat{\beta}=0.67254, p<0.001$, while dramas earned less on average ($\hat{\beta}=0.18584, p=0.0256$. Action films and other genres did not exhibit statistically significant differences. Temporal trends were prominent, with films from the 1980s ($\hat{\beta}=0.85043, p<0.001$). Although Bechdel Test compliance was not statistically significant ($p=0.3677$), its inclusion underscores the need to consider a range of factors in revenue modeling. Table 4 provides a detailed summary of the model results.
 
-Residual diagnostics, as shown in the Residuals vs. Fitted plot and the Q-Q plot, confirm the model's general validity. The Residuals vs. Fitted plot reveals a reasonable scatter around zero, though slight heteroscedasticity at higher fitted values indicates possible variability in error variance. The Q-Q plot demonstrates approximate normality of residuals, with minor deviations in the tails suggesting some outliers or non-normal behavior. These diagnostics indicate the model is well-specified, though further refinement may improve robustness.
+Residual diagnostics, as shown in the Residuals vs. Fitted plot and the Q-Q plot, confirm the model's general validity. The Residuals vs. Fitted plot reveals a reasonable scatter around zero, though slight heteroscedasticity at higher fitted values indicates possible variability in error variance. The Q-Q plot demonstrates approximate normality of residuals, with minor deviations in the tails suggesting some outliers or non-normal behavior. These diagnostics indicate the model is well-specified, though further refinement may improve robustness. The model achieved and adjusted R-square value of 0.48.
 
 ```{r, message=FALSE, results='hide', fig.show='hide'}
 lm_mod_decade_code <- lm(intgross_2013 ~ binary * genre + budget_2013  + decade_code, data = movie_data)
@@ -576,19 +620,14 @@ summary(lm_mod_decade_code)
 plot(lm_mod_decade_code)
 ```
 
-```{r, results='hide', fig.show='hide'}
-#Conduct Log Transformation
-
-movie_data$log_budget_2013 <- log(movie_data$budget_2013)
-movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
+```{r,  message=FALSE, results='hide', fig.show='hide'}
 
 log_lm_model <- lm(log_intgross_2013 ~ binary * genre + log_budget_2013  + decade_code, data = movie_data)
 
 summary(log_lm_model)
 
-
 # Set the layout to have 1 row and 2 columns
-par(mfrow = c(1, 2))
+par(mfrow = c(2, 1), mar = c(2, 2, 2, 0.5))  # Adjust margins if needed
 
 # Generate the Residuals vs Fitted plot
 plot(log_lm_model, which = 1)  # 'which = 1' corresponds to Residuals vs Fitted
@@ -600,7 +639,7 @@ plot(log_lm_model, which = 2)  # 'which = 2' corresponds to the Normal Q-Q plot
 par(mfrow = c(1, 1))
 ```
 
-```{r, results='hide'}
+```{r, message=FALSE, results='hide'}
 # Conduct a nested F test
 
 mod_full <- log_lm_model
@@ -610,7 +649,7 @@ anova(mod_reduced, mod_full, test="F")
 
 ```
 
-```{r, results = 'hide', fig.show='hide'}
+```{r, results = 'hide', message = FALSE, fig.show='hide'}
 summary(mod_reduced)
 plot(mod_reduced)
 ```
@@ -645,21 +684,33 @@ knitr::kable(
 
 ```
 
-```{r}
-# Extract the model summary
+```{r, message = FALSE}
+# Extract summary information
 lm_summary <- summary(mod_reduced)
-# Create the data frame for the table
+
+# Calculate confidence intervals using confint
+conf_intervals <- confint(mod_reduced, level = 0.95)  # Default is 95% confidence level
+
+# Create the data frame for the table, including confidence intervals
 results_table <- data.frame(
   Variable = rownames(lm_summary$coefficients),
   Estimate = formatC(lm_summary$coefficients[, "Estimate"], digits = 4),
   Std_Error = formatC(lm_summary$coefficients[, "Std. Error"], digits = 4),
   t_value = round(lm_summary$coefficients[, "t value"], 3),
+  CI = paste0(
+    "[", 
+    formatC(conf_intervals[, 1], digits = 4),  # Lower bound
+    ", ",
+    formatC(conf_intervals[, 2], digits = 4),  # Upper bound
+    "]"
+  ),
   p_value = ifelse(
     lm_summary$coefficients[, "Pr(>|t|)"] < 0.001,
     "<0.001",
     formatC(lm_summary$coefficients[, "Pr(>|t|)"], format = "f", digits = 3)
   )
 )
+
 # Replace interaction term format and improve readability
 results_table$Variable <- gsub(":", " * ", results_table$Variable) # Replace colons with asterisks for interaction terms
 results_table$Variable <- gsub("_", " ", results_table$Variable)  # Replace underscores with spaces
@@ -669,23 +720,23 @@ results_table$Variable <- gsub("'80-'89", " 1980s", results_table$Variable) # Co
 results_table$Variable <- gsub("'90-'99", " 1990s", results_table$Variable) # Convert to "1990s"
 results_table$Variable <- gsub("'00-'09", " 2000s", results_table$Variable) # Convert to "2000s"
 results_table$Variable <- gsub("'10-'19", " 2010s", results_table$Variable) # Convert to "2010s"
+
 # Use knitr::kable to format the table in LaTeX
 knitr::kable(
   results_table,
   format = "latex",
   caption = "Linear Regression Model Summary: All Coefficients",
-  align = c("l", "c", "c", "c", "c"), # Left-align the Variable column, center others
+  align = c("l", "c", "c", "c", "c", "c"), # Left-align the Variable column, center others
   booktabs = TRUE,
   linesep = "",
   row.names = FALSE # Suppress row names
 )
-
 ```
 
 ```{r, results='hide', message=FALSE}
 
 # Set the layout to have 1 row and 2 columns
-par(mfrow = c(1, 2))
+par(mfrow = c(2, 1), mar = c(2, 2, 2, 0.5))  # Adjust margins if needed
 
 # Generate the Residuals vs Fitted plot
 plot(mod_reduced, which = 1)  # 'which = 1' corresponds to Residuals vs Fitted
@@ -717,8 +768,7 @@ ggplot(movie_data, aes(x = intgross_2013_millions)) +
 
 ```
 
-```{r, fig.show='hide', message=FALSE}
-# Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
+```{r,message=FALSE, fig.show='hide'}
 movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
 
 # Calculate average revenue by Bechdel Test result (binary) and genre
@@ -728,24 +778,76 @@ average_revenue <- movie_data %>%
   ungroup()
 
 # Grouped bar chart
-ggplot(average_revenue, aes(x = genre, y = mean_revenue, fill = binary)) +
+ggplot(average_revenue, aes(x = binary , y = mean_revenue, fill = genre)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
   scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
   labs(
     title = "Impact of Bechdel Test Result on Revenue by Genre",
-    x = "Genre",
+    x = "Bechdel Test Result",
     y = "Average International Gross Revenue (Millions 2013 USD)",
-    fill = "Bechdel Test Result"
+    fill = "Genre"
   ) +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "top"
   )
-
 ```
 
-```{r, fig.show='hide'}
+```{r, message=FALSE, fig.show='hide'}
+
+# Group means for each genre and Bechdel Test result
+means <- movie_data %>%
+  group_by(genre, binary) %>%
+  summarise(mean_log_revenue = mean(log_intgross_2013, na.rm = TRUE))
+
+# Plot
+ggplot(movie_data, aes(x = binary, y = log_intgross_2013, fill = binary)) +
+  geom_boxplot(outlier.alpha = 0.5, width = 0.7) +           # Boxplot with adjusted width
+  geom_hline(data = means, aes(yintercept = mean_log_revenue, color = binary), 
+             linetype = "dashed", size = 0.8, show.legend = FALSE) +  # Mean lines
+  facet_wrap(~ genre, scales = "free_y") +                  # Facet by genre
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) + # Y-axis format
+  labs(
+    title = "International Gross Revenue by Bechdel Test Result and Genre",
+    subtitle = "Dashed lines represent group means",
+    x = "Bechdel Test Result",
+    y = "Log of International Gross Revenue (2013 dollars)",
+    fill = "Bechdel Test Result"
+  ) +
+  theme_minimal(base_size = 12) +                           # Report-ready theme
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+    strip.text = element_text(size = 12, face = "bold"),    # Larger facet labels
+    legend.position = "top",                                # Move legend to top
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 12, margin = margin(b = 10))
+  )
+```
+
+```{r, message=FALSE, fig.show='hide'}
+# Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
+#movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
+
+# Faceted Box Plot
+ggplot(movie_data, aes(x = genre , y = log_intgross_2013, fill = genre)) +
+  geom_boxplot(outlier.alpha = 0.5) +
+  facet_wrap(~ binary, scales = "free_y") +
+  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
+  labs(
+    title = "International Gross Revenue by Bechdel Test Result and Genre",
+    x = "Bechdel Test Result",
+    y = "International Gross Revenue (2013 dollars, in millions)",
+    fill = "Bechdel Test Result"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(size = 10)
+  )
+```
+
+```{r, message=FALSE,fig.show='hide'}
 # Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
 movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
 
@@ -772,14 +874,14 @@ ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, fill = binary)) +
 vif(mod_reduced)
 ```
 
-Cook’s Distance was evaluated to detect any extreme values in the data. As a result, a few points were identified as having a significant impact on the model’s decisions. After refitting the model without these influential points, an improvement of approximately 1% was observed in the adjusted R-squared metric. Consequently, it was concluded that removing these observations from the dataset was not appropriate.
+Cook’s Distance was evaluated to detect any extreme values in the data. As a result, a 4 points were identified as having a significant impact on the model’s decisions. After refitting the model without these influential points, an improvement of approximately 1% was observed in the adjusted R-squared metric. Consequently, it was concluded that removing these observations from the dataset was not appropriate. Additionally, multicollinearity among the variables was assessed, and the Variance Inflation Factor (VIF) scores for all variables were found to be very close to 1, indicating the absence of multicollinearity issues in the final model.
 
-**Figure 7:** Cook's Distance
+**Figure 4:** Cook's Distance
 
-```{r}
+```{r, message = FALSE}
 cooks_distances <- cooks.distance(mod_reduced)
 n <- nrow(movie_data)
-threshold <- .02
+threshold <- 40/n
 influential_points <- which(cooks_distances > threshold)
 
 plot(cooks_distances, type = "h", main = "", 
@@ -788,7 +890,7 @@ plot(cooks_distances, type = "h", main = "",
 #abline(h = threshold, col = "red", lty = 2)
 
 influential_indices <- which(cooks_distances > threshold)
-#points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
+points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
 
 
 ```
