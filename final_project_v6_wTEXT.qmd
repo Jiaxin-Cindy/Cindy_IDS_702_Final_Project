@@ -8,6 +8,7 @@ header-includes:
       - \floatplacement{table}{H}
 execute: 
   echo: false
+  warning: false
 ---
 
 **1. Abstract**
@@ -140,7 +141,7 @@ nrow(movie_data)
 
 A priori variable selection was conducted to examine the relationship between films passing the Bechdel Test and their associated budget and revenue outcomes. Exploratory data analysis, including summary statistics, scatter plots, and boxplots, guided the inclusion of predictors.
 
-Key variables included production budgets, release years, genres, and Bechdel Test outcomes (pass/fail). Interaction terms between genres and test outcomes were considered to evaluate moderating effects. Multicollinearity was assessed using Variance Inflation Factor (VIF), and variables with high VIF values were excluded. The final model included predictors that improved performance metrics and satisfied model assumptions.
+Key variables considered included production budgets, release years, genres, and Bechdel Test outcomes (pass/fail). Interaction terms between genres and Bechdel Test outcomes were incorporated to evaluate potential moderating effects. Multicollinearity was assessed using the Variance Inflation Factor (VIF), which confirmed that it was not an issue in the model. The final model included predictors that enhanced performance metrics while meeting all model assumptions.
 
 ### 3.3 Model Fitting and Evaluation
 
@@ -458,7 +459,7 @@ ggplot(average_revenue, aes(x = genre, y = mean_revenue, fill = binary)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
   scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
   labs(
-    title = "Impact of Bechdel Test Result on Revenue by Genre",
+    #title = "Impact of Bechdel Test Result on Revenue by Genre",
     x = "Genre",
     y = "Avg. Int. Gross Revenue (Millions 2013 USD)",
     fill = "Bechdel Test Result"
@@ -733,6 +734,7 @@ knitr::kable(
 )
 ```
 
+**Figure 3: Linear Regression Model Diagnostic Plots**
 ```{r, results='hide', message=FALSE}
 
 # Set the layout to have 1 row and 2 columns
@@ -768,7 +770,7 @@ ggplot(movie_data, aes(x = intgross_2013_millions)) +
 
 ```
 
-```{r,message=FALSE, fig.show='hide'}
+```{r, message=FALSE, fig.show='hide'}
 movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
 
 # Calculate average revenue by Bechdel Test result (binary) and genre
@@ -847,7 +849,7 @@ ggplot(movie_data, aes(x = genre , y = log_intgross_2013, fill = genre)) +
   )
 ```
 
-```{r, message=FALSE,fig.show='hide'}
+```{r, message=FALSE, fig.show='hide'}
 # Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
 movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
 
@@ -895,7 +897,7 @@ points(influential_indices, cooks_distances[influential_indices], col = "red", p
 
 ```
 
-```{r, results='hide'}
+```{r, results='hide', message=FALSE}
 # Log model without outliers
 
 movie_data_no_influential <- movie_data[-influential_points, ]
@@ -919,6 +921,3 @@ While limitations include potential unmeasured confounders and data availability
 5.  FiveThirtyEight. (n.d.). Bechdel Data. Retrieved from https://github.com/fivethirtyeight/data/tree/master/bechdel.
 6.  Silver, N., & Arthur, R. (2014). The Dollars and Cents Case Against Hollywood’s Exclusion of Women. FiveThirtyEight.
 
-\newpage
-
-# Appendix A: Model Results
