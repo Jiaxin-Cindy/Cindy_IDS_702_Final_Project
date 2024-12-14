@@ -743,6 +743,7 @@ vif(log_lm_model)
 **5. Conclusion**
 
 This study provides insights into the likelihood of passing the Bechdel Test and its relationship with movie budgets, as well as differences in worldwide box office revenue between movies that pass or fail the test. Using the FiveThirtyEight dataset and supplemental IMDb movie details, key insights were revealed, highlighting the connection between gender representation and financial investments in the film industry. The analysis shows that passing the Bechdel Test is influenced by factors such as the movie’s budget, production decade, and its classification as an Action or Horror genre. In terms of worldwide revenue, a positive relationship was observed with production decades and the prominence of Horror and Drama genres. However, the research also revealed that the results of the Bechdel Test are not significantly associated with worldwide revenue, indicating not significant relationship between gender representation and financial success.
+
 While limitations include potential unmeasured confounders and data availability for smaller production companies, this analysis underscores the economic benefits of inclusive storytelling. Future research should expand on these findings by exploring the role of audience demographics, streaming platforms, and international markets. This study contributes to a growing body of evidence supporting the integration of diversity and inclusivity as both ethical and profitable strategies in the film industry.
 
 **6. References**
