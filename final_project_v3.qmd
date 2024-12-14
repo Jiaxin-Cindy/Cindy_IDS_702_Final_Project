@@ -2,7 +2,7 @@
 title: "Analyzing the Bechdel Test: Budget Trends and Revenue Outcomes in Cinema"
 author: "Alex Ackeman, Cindy Gao, Kayla Haeussler, Javidan Karimli"
 subtitle: "December 15th 2024"
-format: pdf
+format: html
 header-includes:
       - \usepackage{float}
       - \floatplacement{table}{H}
