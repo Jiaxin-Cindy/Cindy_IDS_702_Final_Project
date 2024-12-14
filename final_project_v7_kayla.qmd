@@ -86,7 +86,7 @@ movie_data <- movie_data %>%
 # removing period code column because idk what it is and also it has a lot of missing values
 movie_data$period_code <- NULL
 
-head(movie_data)
+tail(movie_data)
 
 glimpse(movie_data)
 
@@ -135,6 +135,8 @@ movie_data <- movie_data %>%
 movie_data <- na.omit(movie_data)
 
 nrow(movie_data)
+
+table(movie_data$decade_code)
 ```
 
 **3.2 Variable Selection**
@@ -264,9 +266,13 @@ knitr::kable(
 
 ```
 
+```{r}
+
+```
+
 **4.2 Research Question 1: Relationship Between the Bechdel Test and Budget**
 
-Across most decades, there is a negative relationship between movie budget and the predicted probability of passing the Bechdel Test, indicating that higher-budget films are less likely to pass. Model performance metrics underscored its moderate ability to classify passing and failing films. The balanced accuracy of the model was 61.98%, reflecting an average of sensitivity (64.77%) and specificity (59.19%). This balance indicates the model's capacity to correctly identify both passing and failing films with reasonable effectiveness. The kappa statistic was 0.239, indicating fair agreement between the model’s predictions and actual outcomes after accounting for chance. The results of the logistic regression model are shown in tables 2 and 3 below:
+Across most decades, there is a negative relationship between movie budget and the predicted probability of passing the Bechdel Test, indicating that higher-budget films are generally less likely to pass. The results of the logistic regression model are shown in tables 2 and 3 below:
 
 ```{r, fig.show='hide'}
 # Updated Per Andrea's feedback
@@ -306,20 +312,75 @@ movie_data <- movie_data %>%
   )
 
 
-
 # View the first few rows to confirm the changes
 head(movie_data)
 
+
+
+```
+
+```{r, message=FALSE, fig.show='hide',results='hide'}\}
+# testing a couple of different combinations of models here to ensure the variables we selected is the best combo, based on AIC
+# we are determining what variables we may want to include in the model in addition to those we are interested in in the research question
+
+mod_test_1 <- glm(binary ~ budget_2013 + decade_code + genre + domgross_2013 + intgross_2013, data = movie_data, family = "binomial") 
+
+mod_test_2 <- glm(binary ~ budget_2013 + decade_code + domgross_2013 + intgross_2013, data = movie_data, family = "binomial")
+
+mod_test_3 <- glm(binary ~ budget_2013 + decade_code + genre + intgross_2013, data = movie_data, family = "binomial")
+
+mod_test_4 <- glm(binary ~ budget_2013 + decade_code + genre + domgross_2013, data = movie_data, family = "binomial")
+
+mod_test_5 <- glm(binary ~ budget_2013 + decade_code, data = movie_data, family = "binomial")
+
+mod_test_6 <- glm(binary ~ budget_2013 + decade_code+ genre, data = movie_data, family = "binomial")
+
+mod_test_7 <- glm(binary ~ budget_2013 + decade_code + domgross_2013, data = movie_data, family = "binomial")
+
+mod_test_8 <- glm(binary ~ budget_2013 + decade_code + intgross_2013, data = movie_data, family = "binomial")
+
+# print each AIC
+AIC(mod_test_1)
+AIC(mod_test_2)
+AIC(mod_test_3)
+AIC(mod_test_4)
+AIC(mod_test_5)
+AIC(mod_test_6)
+AIC(mod_test_7)
+AIC(mod_test_8)
+
+vif(mod_test_3)
+```
+
+```{r}
+# we want to ensure that international revenue is inclusive of domestic revenue
+# Filter rows where domestic revenue is greater than international revenue
+greater_domestic_revenue <- movie_data[movie_data$domgross_2013 > movie_data$intgross_2013, ]
+
+# View the rows where the condition is true
+print(greater_domestic_revenue)
+
+# If you just want to count how many rows meet the condition:
+count <- sum(movie_data$domgross_2013 > movie_data$intgross_2013)
+cat("Number of cases where domestic revenue is greater than international revenue:", count, "\n")
+
+head(movie_data)
+
+# through researching a couple of sample movies it is clear that international revenue includes domestic
+```
+
+```{r}
 # Construct the logistic regression model
-glm_model <- glm(binary ~ budget_2013 + decade_code + genre + domgross_2013 + intgross_2013, data = movie_data, family = "binomial")
+glm_model <- glm(binary ~ budget_2013 + decade_code + genre + intgross_2013, data = movie_data, family = "binomial")
 
 # Summary of the model
 summary(glm_model)
 plot(glm_model)
-
 ```
 
 ```{r}
+
+
 # Extract the model summary
 glm_summary <- summary(glm_model)
 # Create the data frame for the table
@@ -355,6 +416,10 @@ knitr::kable(
 )
 ```
 
+In order to select which variables to include in this model in addition to the variables of interest from our research question, the AIC value of models with varied combinations of variables were calculated. The model with the lowest AIC value was that which included genre, domestic revenue and international revenue. AIC punishes the inclusion of additional predictors, so we felt this was an accurate way for us to select the best model. However, examining VIF values revealed high multicollinearity between domestic and international revenue, which we concluded was due to international revenue including domestic; therefore we included only international revenue in the final model.
+
+The logistic regression analysis reveals key factors influencing the likelihood of a film passing the Bechdel Test. Budget is a significant predictor, with higher budgets decreasing the odds of passing the test (p \< 0.001), suggesting that more expensive films may prioritize traditional narratives less aligned with diversity benchmarks. Decade effects are notable, with films from the 1990s, 2000s, and 2010s significantly more likely to pass the Bechdel Test compared to the baseline (likely pre-1980s), highlighting a positive trend in gender representation over time. Genre plays a critical role, as action films are significantly less likely to pass (p \< 0.001), whereas horror films are more likely to do so (p = 0.002). Drama and "Other" genres show no significant difference from the baseline genre. Interestingly, domestic revenue negatively correlates with passing the test (p = 0.027), while international revenue positively correlates (p = 0.022), indicating that films with inclusive narratives may perform better in global markets. These findings emphasize the influence of budget, genre, and temporal trends on gender representation in cinema, with international audiences appearing to reward inclusivity.
+
 ```{r, results ='hide'}
 # Create the confusion matrix:
 # Generate predicted probabilities
@@ -382,6 +447,8 @@ Table 3: Confusion Matrix
 | **PASS**             | 346  | 470  |
 
 Statistically significant predictors include the **Action genre** (negative effect), **Horror genre** (positive effect), **domestic gross** (negative effect), and **international gross** (positive effect). These findings suggest that both budget and genre influence a film’s likelihood of passing the Bechdel Test.
+
+Model performance metrics underscored its moderate ability to classify passing and failing films. The balanced accuracy of the model was 61.98%, reflecting an average of sensitivity (64.77%) and specificity (59.19%). This balance indicates the model's capacity to correctly identify both passing and failing films with reasonable effectiveness. The kappa statistic was 0.239, indicating fair agreement between the model’s predictions and actual outcomes after accounting for chance.
 
 ```{r, fig.show='hide'}
 # Figure 1: Budget Distribution by Decade (2013, Millions USD)
