@@ -13,7 +13,7 @@ execute:
 
 **1. Abstract**
 
-Media equity and cultural narratives are significantly impacted by gender representation in films. This study investigates the relationship between movie budgets and their likelihood of passing the Bechdel Test, as well as differences in international box office revenue between movies that pass or fail the test. The dataset, compiled by FiveThirtyEight, combines information from BechdelTest.com and The-Numbers.com, with movie genres supplemented using IMDb. Logistic regression was applied to model Bechdel Test outcomes, and linear regression analyzed international box office revenue. Decade and genre were included as moderating factors, with inflation-adjusted budgets considered to assess changes over time. **Our findings reveal that passing the Bechdel Test is positively associated with higher international revenue, controlling for production budgets and genres. Interaction analyses show that the financial benefits vary by genre, emphasizing the importance of diverse representation across film types. Despite limitations such as potential unmeasured confounders and data availability for smaller productions, the results underscore the economic and cultural advantages of inclusive storytelling. Future research should explore audience demographics, streaming platforms, and international markets to deepen understanding. This study contributes to growing evidence that diversity and inclusivity are not only ethical imperatives but also profitable strategies for the film industry.**
+Media equity and cultural narratives are significantly impacted by gender representation in films. This study investigates the relationship between movie budgets and their likelihood of passing the Bechdel Test, as well as differences in worldwide box office revenue between movies that pass or fail the test. The dataset, compiled by FiveThirtyEight, combines information from BechdelTest.com and The-Numbers.com, with movie genres supplemented using IMDb. Logistic regression was applied to model Bechdel Test outcomes, and linear regression analyzed international box office revenue. Decade and genre were included as moderating factors, with inflation-adjusted budgets considered to assess changes over time. **Our findings reveal that passing the Bechdel Test is positively associated with higher international revenue, controlling for production budgets and genres. Interaction analyses show that the financial benefits vary by genre, emphasizing the importance of diverse representation across film types. Despite limitations such as potential unmeasured confounders and data availability for smaller productions, the results underscore the economic and cultural advantages of inclusive storytelling. Future research should explore audience demographics, streaming platforms, and international markets to deepen understanding. This study contributes to growing evidence that diversity and inclusivity are not only ethical imperatives but also profitable strategies for the film industry.**
 
 **2. Introduction**
 
@@ -413,9 +413,9 @@ knitr::kable(
 )
 ```
 
-In order to select which variables to include in this model in addition to the variables of interest from our research question, the AIC value of models with varied combinations of variables were calculated. The model with the lowest AIC value was that which included genre, domestic revenue and international revenue. AIC punishes the inclusion of additional predictors, so we felt this was an accurate way for us to select the best model. However, examining VIF values revealed high multicollinearity between domestic and international revenue, which we concluded was due to international revenue including domestic; therefore we included only international revenue in the final model.
+In order to select which variables to include in this model in addition to the variables of interest from our research question, the AIC value of models with varied combinations of variables were calculated. The model with the lowest AIC value was that which included genre, domestic revenue and worldwide revenue. AIC punishes the inclusion of additional predictors, so we felt this was an accurate way for us to select the best model. However, examining VIF values revealed high multicollinearity between domestic and worldwide revenue, which we concluded was due to worldwide revenue including domestic; therefore we included only worldwide revenue in the final model.
 
-The logistic regression results indicate several significant predictors of a film's likelihood of passing the Bechdel Test. Budget remains a key factor, with higher budgets significantly decreasing the odds of passing the test (p = 0.003), suggesting that higher-budget productions may focus on traditional narratives that do not prioritize gender inclusivity. Decade effects are strongly significant for the 1990s (p = 0.002), 2000s (p \< 0.001), and 2010s (p \< 0.001), where films released in these decades are increasingly more likely to pass the Bechdel Test compared to earlier periods. Genre also has a notable influence, as action films are significantly less likely to pass (p \< 0.001), while horror films are significantly more likely to do so (p = 0.002). Drama and "Other" genres do not show statistically significant differences. Interestingly, international revenue (intgross 2013) does not have a significant effect (p = 0.552) in this model, in contrast to previous expectations. These findings underscore the continued influence of production budgets, temporal trends, and genre preferences on gender representation in cinema. The strong decade effects suggest that progress has been made in recent decades toward more inclusive storytelling.
+The logistic regression results indicate several significant predictors of a film's likelihood of passing the Bechdel Test. Budget remains a key factor, with higher budgets significantly decreasing the odds of passing the test (p = 0.003), suggesting that higher-budget productions may focus on traditional narratives that do not prioritize gender inclusivity. Decade effects are strongly significant for the 1990s (p = 0.002), 2000s (p \< 0.001), and 2010s (p \< 0.001), where films released in these decades are increasingly more likely to pass the Bechdel Test compared to earlier periods. Genre also has a notable influence, as action films are significantly less likely to pass (p \< 0.001), while horror films are significantly more likely to do so (p = 0.002). Drama and "Other" genres do not show statistically significant differences. Interestingly, worldwide revenue does not have a significant effect (p = 0.552) in this model, in contrast to previous expectations. These findings underscore the continued influence of production budgets, temporal trends, and genre preferences on gender representation in cinema. The strong decade effects suggest that progress has been made in recent decades toward more inclusive storytelling.
 
 ```{r, results ='hide'}
 # Create the confusion matrix:
@@ -486,9 +486,9 @@ ggplot(movie_data, aes(x = budget_2013_millions, y = predicted_prob, color = dec
 
 Figure 1 illustrates the predicted probability of a film passing the Bechdel Test as a function of its production budget (adjusted to 2013 USD), stratified by decade. The black trendline indicates an overall negative relationship between budget and the likelihood of passing the Bechdel Test, with probabilities decreasing as budgets increase up to approximately \$300 million. This suggests that higher-budget films are less likely to prioritize gender-inclusive narratives. Interestingly, there is a slight upward trend in passing probability for the very highest-budget films, but the confidence interval (shaded region) is wide, indicating high uncertainty. Films from more recent decades (2000s and 2010s, shown in orange and yellow) generally have higher baseline probabilities of passing the test compared to earlier decades (e.g., 1970s and 1980s, shown in purple and blue), reflecting temporal improvements in gender representation. This temporal trend underscores the evolving priorities of the film industry toward inclusivity, though budget remains a constraining factor.
 
-**4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office**
+**4.3 Research Question 2: Bechdel Test, Genre, and the Worldwide Box Office**
 
-To investigate the factors influencing international gross revenue, a linear regression model was fitted with Bechdel Test outcome, production budget (log-transformed), genre, and decade of release as predictors. Figure 2 (below) suggested a potential interaction between genre and Bechdel Test outcome; however, a nested F-test revealed that the interaction term was not statistically significant (p=0.8664). Consequently, the interaction term was excluded from the final model, and the remainder of the analysis focused on the simplified model without interactions.
+To investigate the factors influencing worldwide gross revenue, a linear regression model was fitted with Bechdel Test outcome, production budget (log-transformed), genre, and decade of release as predictors. Figure 2 (below) suggested a potential interaction between genre and Bechdel Test outcome; however, a nested F-test revealed that the interaction term was not statistically significant (p=0.8664). Consequently, the interaction term was excluded from the final model, and the remainder of the analysis focused on the simplified model without interactions.
 
 ```{r}
 
@@ -553,12 +553,12 @@ add_best_fit_lines <- function(x, y, genre, data, colors) {
   }
 }
 
-# Log Transformed Budget vs Log International Gross Scatter Plot
+# Log Transformed Budget vs Log worldwide Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
      col = movie_data$genre_color, 
      pch = 19,
      xlab = "Log Budget", 
-     ylab = "Log International Gross",
+     ylab = "Log Worldwide Gross",
 )
 
 add_best_fit_lines("log_budget_2013", "log_intgross_2013", movie_data$genre, movie_data, genre_colors)
@@ -574,16 +574,16 @@ legend("bottom", legend = levels(factor(movie_data$genre)),
 
 ```
 
-**Figure 3: Log International Gross by Genre and Passing Test**
+**Figure 3: Log Worldwide Gross by Genre and Passing Test**
 
 ```{r, fig.show='hide'}
 # Interaction plot with ggplot
 interaction_plot <- ggplot(movie_data, aes(x = binary, y = log_intgross_2013, fill = genre)) +
   geom_boxplot() +
   labs(
-    title = "International Gross by Genre and Passing Test",
+    title = "Worldwide Gross by Genre and Passing Test",
     x = "Passing Test",
-    y = "International Gross"
+    y = "Worldwide Gross"
   ) +
   theme_minimal()
 
@@ -614,13 +614,13 @@ add_trend_lines <- function(x, y, group, data, colors) {
 }
 
 
-# Log Transformed Budget vs Log International Gross Scatter Plot
+# Log Transformed Budget vs Log Worldwide Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
      col = movie_data$decade_color, 
      pch = 19,
      xlab = "Log Budget", 
-     ylab = "Log International Gross",
-     main = "Log Budget vs Log International Gross (by Decade)")
+     ylab = "Log Worldwide Gross",
+     main = "Log Budget vs Log Worldwide Gross (by Decade)")
 
 add_trend_lines("log_budget_2013", "log_intgross_2013", movie_data$decade_code, movie_data, decade_colors)
 legend("bottomright", legend = levels(factor(movie_data$decade_code)), col = decade_colors, pch = 19)
@@ -651,13 +651,13 @@ add_trend_lines <- function(x, y, group, data, colors) {
 }
 
 
-# Log Transformed Budget vs Log International Gross Scatter Plot
+# Log Transformed Budget vs Log Worldwide Gross Scatter Plot
 plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
      col = movie_data$binary_color, 
      pch = 19,
      xlab = "Log Budget", 
-     ylab = "Log International Gross",
-     main = "Log Budget vs Log International Gross (by Bechdel Result)")
+     ylab = "Log Worldwide Gross",
+     main = "Log Budget vs Log Worldwide Gross (by Bechdel Result)")
 
 add_trend_lines("log_budget_2013", "log_intgross_2013", movie_data$binary, movie_data, binary_colors)
 legend("bottomright", legend = levels(factor(movie_data$binary)), col = binary_colors, pch = 19)
@@ -665,7 +665,7 @@ legend("bottomright", legend = levels(factor(movie_data$binary)), col = binary_c
 
 ```
 
-The regression analysis reveals that the log-transformed production budget was the strongest predictor of international revenue ($\hat{\beta}=0.89544, p<0.001$, indicating a nearly proportional relationship between budget and revenue. Among genres, horror films earned significantly higher revenues compared to the baseline genre ($\hat{\beta}=0.67254, p<0.001$, while dramas earned less on average ($\hat{\beta}=0.18584, p=0.0256$. Action films and other genres did not exhibit statistically significant differences. Temporal trends were prominent, with films from the 1980s ($\hat{\beta}=0.85043, p<0.001$). Although Bechdel Test compliance was not statistically significant ($p=0.3677$), its inclusion underscores the need to consider a range of factors in revenue modeling. Table 4 provides a detailed summary of the model results.
+The regression analysis reveals that the log-transformed production budget was the strongest predictor of worldwide revenue ($\hat{\beta}=0.89544, p<0.001$, indicating a nearly proportional relationship between budget and revenue. Among genres, horror films earned significantly higher revenues compared to the baseline genre ($\hat{\beta}=0.67254, p<0.001$, while dramas earned less on average ($\hat{\beta}=0.18584, p=0.0256$. Action films and other genres did not exhibit statistically significant differences. Temporal trends were prominent, with films from the 1980s ($\hat{\beta}=0.85043, p<0.001$). Although Bechdel Test compliance was not statistically significant ($p=0.3677$), its inclusion underscores the need to consider a range of factors in revenue modeling. Table 4 provides a detailed summary of the model results.
 
 Residual diagnostics, as shown in the Residuals vs. Fitted plot and the Q-Q plot, confirm the model's general validity. The Residuals vs. Fitted plot reveals a reasonable scatter around zero, though slight heteroscedasticity at higher fitted values indicates possible variability in error variance. The Q-Q plot demonstrates approximate normality of residuals, with minor deviations in the tails suggesting some outliers or non-normal behavior. These diagnostics indicate the model is well-specified, though further refinement may improve robustness. The model achieved and adjusted R-square value of 0.48.
 
@@ -808,18 +808,18 @@ par(mfrow = c(1, 1))
 ```
 
 ```{r, message=FALSE, fig.show='hide'}
-# **Figure 6:** Histogram of International Gross Revenue (2013 dollars, in millions)
+# **Figure 6:** Histogram of Worldwide Gross Revenue (2013 dollars, in millions)
 
 
-# Convert international gross revenue to millions
+# Convert worldwide gross revenue to millions
 movie_data <- movie_data %>%
   mutate(intgross_2013_millions = intgross_2013 / 1e6)
 
-# Histogram for international gross revenue in millions
+# Histogram for worldwide gross revenue in millions
 ggplot(movie_data, aes(x = intgross_2013_millions)) +
   geom_histogram(fill = "steelblue", bins = 30) +
   labs(
-    x = "International Gross Revenue (2013 dollars, in millions)",
+    x = "Worldwide Gross Revenue (2013 dollars, in millions)",
     y = "Frequency"
   ) +
   ggtitle("") +
@@ -843,7 +843,7 @@ ggplot(average_revenue, aes(x = binary , y = mean_revenue, fill = genre)) +
   labs(
     title = "Impact of Bechdel Test Result on Revenue by Genre",
     x = "Bechdel Test Result",
-    y = "Average International Gross Revenue (Millions 2013 USD)",
+    y = "Average Worldwide Gross Revenue (Millions 2013 USD)",
     fill = "Genre"
   ) +
   theme_minimal() +
@@ -868,10 +868,10 @@ ggplot(movie_data, aes(x = binary, y = log_intgross_2013, fill = binary)) +
   facet_wrap(~ genre, scales = "free_y") +                  # Facet by genre
   scale_y_continuous(labels = scales::dollar_format(suffix = "M")) + # Y-axis format
   labs(
-    title = "International Gross Revenue by Bechdel Test Result and Genre",
+    title = "Worldwide Gross Revenue by Bechdel Test Result and Genre",
     subtitle = "Dashed lines represent group means",
     x = "Bechdel Test Result",
-    y = "Log of International Gross Revenue (2013 dollars)",
+    y = "Log of Worldwide Gross Revenue (2013 dollars)",
     fill = "Bechdel Test Result"
   ) +
   theme_minimal(base_size = 12) +                           # Report-ready theme
@@ -894,9 +894,9 @@ ggplot(movie_data, aes(x = genre , y = log_intgross_2013, fill = genre)) +
   facet_wrap(~ binary, scales = "free_y") +
   scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
   labs(
-    title = "International Gross Revenue by Bechdel Test Result and Genre",
+    title = "Worldwide Gross Revenue by Bechdel Test Result and Genre",
     x = "Bechdel Test Result",
-    y = "International Gross Revenue (2013 dollars, in millions)",
+    y = "Worldwide Gross Revenue (2013 dollars, in millions)",
     fill = "Bechdel Test Result"
   ) +
   theme_minimal() +
@@ -916,9 +916,9 @@ ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, fill = binary)) +
   facet_wrap(~ genre, scales = "free_y") +
   scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
   labs(
-    title = "International Gross Revenue by Bechdel Test Result and Genre",
+    title = "Worldwide Gross Revenue by Bechdel Test Result and Genre",
     x = "Bechdel Test Result",
-    y = "International Gross Revenue (2013 dollars, in millions)",
+    y = "Worldwide Gross Revenue (2013 dollars, in millions)",
     fill = "Bechdel Test Result"
   ) +
   theme_minimal() +
