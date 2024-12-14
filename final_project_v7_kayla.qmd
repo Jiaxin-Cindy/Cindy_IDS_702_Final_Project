@@ -484,15 +484,7 @@ Figure 1 illustrates the predicted probability of a film passing the Bechdel Tes
 
 **4.3 Research Question 2: Bechdel Test, Genre, and the Worldwide Box Office**
 
-To investigate the factors influencing worldwide gross revenue, a linear regression model was fitted with Bechdel Test outcome, production budget (log-transformed), genre, and decade of release as predictors. Figure 2 (below) suggested a potential interaction between genre and Bechdel Test outcome; however, a nested F-test revealed that the interaction term was not statistically significant (p=0.8664). Consequently, the interaction term was excluded from the final model, and the remainder of the analysis focused on the simplified model without interactions.
-
-```{r}
-
-#Conduct Log Transformation
-
-movie_data$log_budget_2013 <- log(movie_data$budget_2013)
-movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
-```
+To investigate the factors influencing worldwide gross revenue, a linear regression model was fitted with Bechdel Test outcome, production budget, genre, and decade of release as predictors, variables which were selecting a priori. Our exploratory analysis revealed the need for exploration of an interaction term. Figure 2 (below) suggested a potential interaction between genre and Bechdel Test outcome.
 
 **Figure 2: Impact of Bechdel Test Result on Revenue by Genre**
 
@@ -524,158 +516,41 @@ ggplot(average_revenue, aes(x = genre, y = mean_revenue, fill = binary)) +
 
 ```
 
-```{r, message=FALSE, fig.show='hide'}
-# Group By Genre
-
-# Load required library
-library(RColorBrewer)
-
-# Create a color palette for genres (color-blind friendly)
-genres <- unique(movie_data$genre)
-genre_colors <- brewer.pal(min(length(genres), 8), "Set2")  # Use 'Set2' palette for up to 8 genres
-movie_data$genre_color <- genre_colors[as.numeric(factor(movie_data$genre))]
-
-# Function to add best fit lines for each genre
-add_best_fit_lines <- function(x, y, genre, data, colors) {
-  unique_genres <- unique(genre)
-  for (i in seq_along(unique_genres)) {
-    g <- unique_genres[i]
-    subset_data <- data[data$genre == g, ]
-    
-    if (nrow(subset_data) > 1) {  # At least two points are needed for regression
-      fit <- lm(subset_data[[y]] ~ subset_data[[x]])
-      abline(fit, col = colors[i], lwd = 2)
-    }
-  }
-}
-
-# Log Transformed Budget vs Log worldwide Gross Scatter Plot
-plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
-     col = movie_data$genre_color, 
-     pch = 19,
-     xlab = "Log Budget", 
-     ylab = "Log Worldwide Gross",
-)
-
-add_best_fit_lines("log_budget_2013", "log_intgross_2013", movie_data$genre, movie_data, genre_colors)
-
-# Add horizontal legend at the bottom
-legend("bottom", legend = levels(factor(movie_data$genre)), 
-       col = genre_colors, 
-       pch = 19, 
-       horiz = TRUE,  # Makes the legend horizontal
-       cex = 0.8,     # Adjust size for readability
-       bty = "n",     # Remove the box around the legend
-   )  # Adjust position slightly outside the plot area
-
-```
-
-**Figure 3: Log Worldwide Gross by Genre and Passing Test**
-
-```{r, fig.show='hide'}
-# Interaction plot with ggplot
-interaction_plot <- ggplot(movie_data, aes(x = binary, y = log_intgross_2013, fill = genre)) +
-  geom_boxplot() +
-  labs(
-    title = "Worldwide Gross by Genre and Passing Test",
-    x = "Passing Test",
-    y = "Worldwide Gross"
-  ) +
-  theme_minimal()
-
-print(interaction_plot)
-```
-
-```{r, fig.show='hide'}
-# Load required library
-library(RColorBrewer)
-
-# Create a color palette for decade_code (color-blind friendly)
-decades <- unique(movie_data$decade_code)
-decade_colors <- brewer.pal(min(length(decades), 8), "Set2")  # Use 'Set2' palette
-movie_data$decade_color <- decade_colors[as.numeric(factor(movie_data$decade_code))]
-
-# Function to add trend lines for each decade
-add_trend_lines <- function(x, y, group, data, colors) {
-  unique_decades <- unique(group)
-  for (i in seq_along(unique_decades)) {
-    d <- unique_decades[i]
-    subset_data <- data[data$decade_code == d, ]
-    
-    if (nrow(subset_data) > 1) {  # At least two points are needed for regression
-      fit <- lm(subset_data[[y]] ~ subset_data[[x]])
-      abline(fit, col = colors[i], lwd = 2)
-    }
-  }
-}
-
-
-# Log Transformed Budget vs Log Worldwide Gross Scatter Plot
-plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
-     col = movie_data$decade_color, 
-     pch = 19,
-     xlab = "Log Budget", 
-     ylab = "Log Worldwide Gross",
-     main = "Log Budget vs Log Worldwide Gross (by Decade)")
-
-add_trend_lines("log_budget_2013", "log_intgross_2013", movie_data$decade_code, movie_data, decade_colors)
-legend("bottomright", legend = levels(factor(movie_data$decade_code)), col = decade_colors, pch = 19)
-
-
-```
-
-```{r, fig.show='hide'}
-# Load required library
-library(RColorBrewer)
-
-# Create a color palette for binary (PASS/FAIL)
-binary_colors <- brewer.pal(3, "Set2")[1:2]  # Select two colors from the Set2 palette
-movie_data$binary_color <- binary_colors[as.numeric(factor(movie_data$binary))]
-
-# Function to add trend lines for each binary group
-add_trend_lines <- function(x, y, group, data, colors) {
-  unique_groups <- unique(group)
-  for (i in seq_along(unique_groups)) {
-    g <- unique_groups[i]
-    subset_data <- data[data$binary == g, ]
-    
-    if (nrow(subset_data) > 1) {  # At least two points are needed for regression
-      fit <- lm(subset_data[[y]] ~ subset_data[[x]])
-      abline(fit, col = colors[i], lwd = 2)
-    }
-  }
-}
-
-
-# Log Transformed Budget vs Log Worldwide Gross Scatter Plot
-plot(movie_data$log_budget_2013, movie_data$log_intgross_2013, 
-     col = movie_data$binary_color, 
-     pch = 19,
-     xlab = "Log Budget", 
-     ylab = "Log Worldwide Gross",
-     main = "Log Budget vs Log Worldwide Gross (by Bechdel Result)")
-
-add_trend_lines("log_budget_2013", "log_intgross_2013", movie_data$binary, movie_data, binary_colors)
-legend("bottomright", legend = levels(factor(movie_data$binary)), col = binary_colors, pch = 19)
-
-
-```
-
-The regression analysis reveals that the log-transformed production budget was the strongest predictor of worldwide revenue ($\hat{\beta}=0.89544, p<0.001$, indicating a nearly proportional relationship between budget and revenue. Among genres, horror films earned significantly higher revenues compared to the baseline genre ($\hat{\beta}=0.67254, p<0.001$, while dramas earned less on average ($\hat{\beta}=0.18584, p=0.0256$. Action films and other genres did not exhibit statistically significant differences. Temporal trends were prominent, with films from the 1980s ($\hat{\beta}=0.85043, p<0.001$). Although Bechdel Test compliance was not statistically significant ($p=0.3677$), its inclusion underscores the need to consider a range of factors in revenue modeling. Table 4 provides a detailed summary of the model results.
-
-Residual diagnostics, as shown in the Residuals vs. Fitted plot and the Q-Q plot, confirm the model's general validity. The Residuals vs. Fitted plot reveals a reasonable scatter around zero, though slight heteroscedasticity at higher fitted values indicates possible variability in error variance. The Q-Q plot demonstrates approximate normality of residuals, with minor deviations in the tails suggesting some outliers or non-normal behavior. These diagnostics indicate the model is well-specified, though further refinement may improve robustness. The model achieved and adjusted R-square value of 0.48.
+From this initial exploration, we thought it most appropriate to explore the interaction between Bechdel test outcome and genre, as test outcome appeared to vary across genres. We added this interaction term to our linear model, but found that none of the interaction variables were statistically significant, meaning the interaction terms did not show meaningful contributions in explaining variation in worldwide revenue. Additionally, a nested F-test was conducted between models with and without the interaction term revealed an F-statistic that was not statistically significant (p=0.86640), meaning that including the interaction term in our model did not significantly contribute to explaining variation in our response variable. Consequently, the interaction term was excluded from the final model, and the remainder of the analysis focused on the simplified model without interactions.
 
 ```{r, message=FALSE, results='hide', fig.show='hide'}
 lm_mod_decade_code <- lm(intgross_2013 ~ binary * genre + budget_2013  + decade_code, data = movie_data)
+
+summary(lm_mod_decade_code)
+plot(lm_mod_decade_code)
+
+```
+
+```{r, message=FALSE, results='hide'}
+mod_full <- lm_mod_decade_code
+mod_reduced <- lm(intgross_2013 ~ binary + genre + budget_2013 + decade_code, data = movie_data)
+anova(mod_reduced, mod_full, test="F")
+
+```
+
+Now that it was determined an interaction term would not be included, we moved forward with the variables of Bechdel test outcome, genre, budget and decade code in our model. This linear model was created, but creation of diagnostic plots revealed a fanning pattern in the residuals vs. fitted plots as well as significant deviation from teh theoretical quantile line in the QQ-plot, indicating the presence of heteroscedasticity and non-normal distribution of the residuals respectively. In order to combat this, we performed a logarithmic transformation on the numerical variables in our model, worldwide revenue and budget. This transformation dramatically improved the previous issues seen in the diagnostic plots. As seen in figure LKDWJHLAKJNDJKLFN below the Residuals vs. Fitted plot reveals a reasonable scatter around zero, though slight heteroscedasticity at higher fitted values indicates possible variability in error variance. The Q-Q plot demonstrates approximate normality of residuals, with minor deviations in the tails suggesting some outliers or non-normal behavior. These diagnostics indicate the model is well-specified, though further refinement may improve robustness.
+
+```{r, message=FALSE,results='hide',fig.show='hide'}
+lm_mod_decade_code <- lm(intgross_2013 ~ binary + genre + budget_2013  + decade_code, data = movie_data)
 
 summary(lm_mod_decade_code)
 
 plot(lm_mod_decade_code)
 ```
 
-```{r,  message=FALSE, results='hide', fig.show='hide'}
+```{r,  message=FALSE, results='hide'}
 
-log_lm_model <- lm(log_intgross_2013 ~ binary * genre + log_budget_2013  + decade_code, data = movie_data)
+#Conduct Log Transformation
+
+movie_data$log_budget_2013 <- log(movie_data$budget_2013)
+movie_data$log_intgross_2013 <- log(movie_data$intgross_2013)
+
+log_lm_model <- lm(log_intgross_2013 ~ binary + genre + log_budget_2013  + decade_code, data = movie_data)
 
 summary(log_lm_model)
 
@@ -692,57 +567,14 @@ plot(log_lm_model, which = 2)  # 'which = 2' corresponds to the Normal Q-Q plot
 par(mfrow = c(1, 1))
 ```
 
-```{r, message=FALSE, results='hide'}
-# Conduct a nested F test
+Our final linear model yielded the following results, shown in figure KJAHJDBAKJKJ below
 
-mod_full <- log_lm_model
-mod_reduced <- lm(log_intgross_2013 ~ binary + genre + log_budget_2013 + decade_code, data = movie_data)
-
-anova(mod_reduced, mod_full, test="F")
-
-```
-
-```{r, results = 'hide', message = FALSE, fig.show='hide'}
-summary(mod_reduced)
-plot(mod_reduced)
-```
-
-```{r, message=FALSE, results='hide'}
-confint(mod_reduced)
-
-```
-
-```{r, message=FALSE, results='hide'}
-# Create a data frame for the table
-research_question_2_table <- data.frame(
-  Genre = c("Action", "Comedy", "Drama", "Horror", "Other"),
-  `Number of Movies in Dataset` = c(483, 498, 442, 100,  271)
-)
-
-# Transpose the table for horizontal display
-transposed_table <- as.data.frame(t(research_question_2_table))
-colnames(transposed_table) <- transposed_table[1, ]  # Set first row as column names
-transposed_table <- transposed_table[-1, ]  # Remove the first row used as column names
-
-# Use knitr::kable to format the horizontal table
-knitr::kable(
-  transposed_table,
-  format = "html",  # Use "html" or "latex" depending on your R Markdown output
-  row.names = TRUE,  # Include row names
-  caption = "Distribution of Movies by Genre in the Dataset (Horizontal)",
-  align = "c",
-  booktabs = TRUE
-)
-
-
-```
-
-```{r, message = FALSE}
+```{r}
 # Extract summary information
-lm_summary <- summary(mod_reduced)
+lm_summary <- summary(log_lm_model)
 
 # Calculate confidence intervals using confint
-conf_intervals <- confint(mod_reduced, level = 0.95)  # Default is 95% confidence level
+conf_intervals <- confint(log_lm_model, level = 0.95)  # Default is 95% confidence level
 
 # Create the data frame for the table, including confidence intervals
 results_table <- data.frame(
@@ -786,26 +618,56 @@ knitr::kable(
 )
 ```
 
-**Figure 3: Linear Regression Model Diagnostic Plots**
+INTERPRET RESULTS
 
-```{r, results='hide', message=FALSE}
+**Figure 3: Log Worldwide Gross by Genre and Passing Test**
 
-# Set the layout to have 1 row and 2 columns
-par(mfrow = c(2, 1), mar = c(2, 2, 2, 0.5))  # Adjust margins if needed
+The regression analysis reveals that the log-transformed production budget was the strongest predictor of worldwide revenue ($\hat{\beta}=0.89544, p<0.001$, indicating a nearly proportional relationship between budget and revenue. Among genres, horror films earned significantly higher revenues compared to the baseline genre ($\hat{\beta}=0.67254, p<0.001$, while dramas earned less on average ($\hat{\beta}=0.18584, p=0.0256$. Action films and other genres did not exhibit statistically significant differences. Temporal trends were prominent, with films from the 1980s ($\hat{\beta}=0.85043, p<0.001$). Although Bechdel Test compliance was not statistically significant ($p=0.3677$), its inclusion underscores the need to consider a range of factors in revenue modeling. Table 4 provides a detailed summary of the model results.
 
-# Generate the Residuals vs Fitted plot
-plot(mod_reduced, which = 1)  # 'which = 1' corresponds to Residuals vs Fitted
+```{r}
+cooks_distances <- cooks.distance(log_lm_model)
+n <- nrow(movie_data)
+threshold <- 40/n
+influential_points <- which(cooks_distances > threshold)
 
-# Generate the QQ plot
-plot(mod_reduced, which = 2)  # 'which = 2' corresponds to the Normal Q-Q plot
+plot(cooks_distances, type = "h", main = "", 
+     ylab = "Cook's Distance", xlab = "Index")
 
-# Reset the plotting layout to default
-par(mfrow = c(1, 1))
+abline(h = threshold, col = "red", lty = 2)
+
+influential_indices <- which(cooks_distances > threshold)
+points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
 ```
+
+```{r, message=FALSE, results='hide'}
+# Create a data frame for the table
+research_question_2_table <- data.frame(
+  Genre = c("Action", "Comedy", "Drama", "Horror", "Other"),
+  `Number of Movies in Dataset` = c(483, 498, 442, 100,  271)
+)
+
+# Transpose the table for horizontal display
+transposed_table <- as.data.frame(t(research_question_2_table))
+colnames(transposed_table) <- transposed_table[1, ]  # Set first row as column names
+transposed_table <- transposed_table[-1, ]  # Remove the first row used as column names
+
+# Use knitr::kable to format the horizontal table
+knitr::kable(
+  transposed_table,
+  format = "html",  # Use "html" or "latex" depending on your R Markdown output
+  row.names = TRUE,  # Include row names
+  caption = "Distribution of Movies by Genre in the Dataset (Horizontal)",
+  align = "c",
+  booktabs = TRUE
+)
+
+
+```
+
+**Figure 3: Linear Regression Model Diagnostic Plots**
 
 ```{r, message=FALSE, fig.show='hide'}
 # **Figure 6:** Histogram of Worldwide Gross Revenue (2013 dollars, in millions)
-
 
 # Convert worldwide gross revenue to millions
 movie_data <- movie_data %>%
@@ -902,31 +764,8 @@ ggplot(movie_data, aes(x = genre , y = log_intgross_2013, fill = genre)) +
   )
 ```
 
-```{r, message=FALSE, fig.show='hide'}
-# Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
-movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
-
-# Faceted Box Plot
-ggplot(movie_data, aes(x = binary, y = intgross_2013_millions, fill = binary)) +
-  geom_boxplot(outlier.alpha = 0.5) +
-  facet_wrap(~ genre, scales = "free_y") +
-  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) +
-  labs(
-    title = "Worldwide Gross Revenue by Bechdel Test Result and Genre",
-    x = "Bechdel Test Result",
-    y = "Worldwide Gross Revenue (2013 dollars, in millions)",
-    fill = "Bechdel Test Result"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    strip.text = element_text(size = 10)
-  )
-
-```
-
 ```{r, message=FALSE, results='hide'}
-vif(mod_reduced)
+vif(log_lm_model)
 ```
 
 Cook’s Distance was evaluated to detect any extreme values in the data. As a result, a 4 points were identified as having a significant impact on the model’s decisions. After refitting the model without these influential points, an improvement of approximately 1% was observed in the adjusted R-squared metric. Consequently, it was concluded that removing these observations from the dataset was not appropriate. Additionally, multicollinearity among the variables was assessed, and the Variance Inflation Factor (VIF) scores for all variables were found to be very close to 1, indicating the absence of multicollinearity issues in the final model.
@@ -934,7 +773,7 @@ Cook’s Distance was evaluated to detect any extreme values in the data. As a r
 **Figure 4:** Cook's Distance
 
 ```{r, message = FALSE}
-cooks_distances <- cooks.distance(mod_reduced)
+cooks_distances <- cooks.distance(log_lm_model)
 n <- nrow(movie_data)
 threshold <- 40/n
 influential_points <- which(cooks_distances > threshold)
@@ -942,7 +781,7 @@ influential_points <- which(cooks_distances > threshold)
 plot(cooks_distances, type = "h", main = "", 
      ylab = "Cook's Distance", xlab = "Index")
 
-#abline(h = threshold, col = "red", lty = 2)
+abline(h = threshold, col = "red", lty = 2)
 
 influential_indices <- which(cooks_distances > threshold)
 points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
