@@ -263,7 +263,6 @@ knitr::kable(
   linesep = ""
 )
 
-
 ```
 
 **4.2 Research Question 1: Relationship Between the Bechdel Test and Budget**
@@ -310,9 +309,6 @@ movie_data <- movie_data %>%
 
 # View the first few rows to confirm the changes
 head(movie_data)
-
-
-
 ```
 
 ```{r, message=FALSE, fig.show='hide',results='hide'}
@@ -618,11 +614,7 @@ knitr::kable(
 )
 ```
 
-INTERPRET RESULTS
-
-**Figure 3: Log Worldwide Gross by Genre and Passing Test**
-
-The regression analysis reveals that the log-transformed production budget was the strongest predictor of worldwide revenue ($\hat{\beta}=0.89544, p<0.001$, indicating a nearly proportional relationship between budget and revenue. Among genres, horror films earned significantly higher revenues compared to the baseline genre ($\hat{\beta}=0.67254, p<0.001$, while dramas earned less on average ($\hat{\beta}=0.18584, p=0.0256$. Action films and other genres did not exhibit statistically significant differences. Temporal trends were prominent, with films from the 1980s ($\hat{\beta}=0.85043, p<0.001$). Although Bechdel Test compliance was not statistically significant ($p=0.3677$), its inclusion underscores the need to consider a range of factors in revenue modeling. Table 4 provides a detailed summary of the model results.
+The linear regression model reveals that the natural log of a movie’s budget is the strongest predictor of international gross revenue, with a highly significant positive association (estimate = 0.895, p \< 0.001). Among genres, horror movies significantly outperform the reference genre (estimate = 0.672, p \< 0.001), while dramas show a modest but significant negative impact (estimate = -0.186, p = 0.026). Passing the Bechdel Test does not significantly influence revenue (estimate = -0.056, p = 0.368), suggesting no clear relationship between gender representation and financial success in this model. Decade effects indicate a steady decline in international gross revenue over time, with the 2000s (estimate = -1.318, p \< 0.001) and 2010s (estimate = -1.234, p \< 0.001) showing the largest negative associations. These findings highlight budget, genre, and decade as key factors in predicting international gross revenue.
 
 ```{r}
 cooks_distances <- cooks.distance(log_lm_model)
@@ -638,6 +630,17 @@ abline(h = threshold, col = "red", lty = 2)
 influential_indices <- which(cooks_distances > threshold)
 points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
 ```
+
+```{r,message=FALSE, results='hide'}
+# Log model without outliers
+summary(log_lm_model)
+movie_data_no_influential <- movie_data[-influential_points, ]
+mod_reduced_without_extreme <- lm(log_intgross_2013 ~ binary + genre + log_budget_2013 + decade_code, data = movie_data_no_influential)
+summary(mod_reduced_without_extreme)
+summary(mod_reduced)
+```
+
+Cook’s Distance was evaluated to detect any extreme values in the data. As a result, a 4 points were identified as having a significant impact on the model’s decisions. After refitting the model without these influential points, an improvement of approximately 1% was observed in the adjusted R-squared metric. Consequently, it was concluded that removing these observations from the dataset was not appropriate. Additionally, multicollinearity among the variables was assessed, and the Variance Inflation Factor (VIF) scores for all variables were found to be very close to 1, indicating the absence of multicollinearity issues in the final model.
 
 ```{r, message=FALSE, results='hide'}
 # Create a data frame for the table
@@ -663,8 +666,6 @@ knitr::kable(
 
 
 ```
-
-**Figure 3: Linear Regression Model Diagnostic Plots**
 
 ```{r, message=FALSE, fig.show='hide'}
 # **Figure 6:** Histogram of Worldwide Gross Revenue (2013 dollars, in millions)
@@ -712,37 +713,6 @@ ggplot(average_revenue, aes(x = binary , y = mean_revenue, fill = genre)) +
 ```
 
 ```{r, message=FALSE, fig.show='hide'}
-
-# Group means for each genre and Bechdel Test result
-means <- movie_data %>%
-  group_by(genre, binary) %>%
-  summarise(mean_log_revenue = mean(log_intgross_2013, na.rm = TRUE))
-
-# Plot
-ggplot(movie_data, aes(x = binary, y = log_intgross_2013, fill = binary)) +
-  geom_boxplot(outlier.alpha = 0.5, width = 0.7) +           # Boxplot with adjusted width
-  geom_hline(data = means, aes(yintercept = mean_log_revenue, color = binary), 
-             linetype = "dashed", size = 0.8, show.legend = FALSE) +  # Mean lines
-  facet_wrap(~ genre, scales = "free_y") +                  # Facet by genre
-  scale_y_continuous(labels = scales::dollar_format(suffix = "M")) + # Y-axis format
-  labs(
-    title = "Worldwide Gross Revenue by Bechdel Test Result and Genre",
-    subtitle = "Dashed lines represent group means",
-    x = "Bechdel Test Result",
-    y = "Log of Worldwide Gross Revenue (2013 dollars)",
-    fill = "Bechdel Test Result"
-  ) +
-  theme_minimal(base_size = 12) +                           # Report-ready theme
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-    strip.text = element_text(size = 12, face = "bold"),    # Larger facet labels
-    legend.position = "top",                                # Move legend to top
-    plot.title = element_text(face = "bold", size = 14),
-    plot.subtitle = element_text(size = 12, margin = margin(b = 10))
-  )
-```
-
-```{r, message=FALSE, fig.show='hide'}
 # Convert the intgross_2013$ column to numeric after removing any commas and scale to millions
 #movie_data$intgross_2013_millions <- as.numeric(gsub(",", "", movie_data$`intgross_2013`)) / 1e6
 
@@ -766,36 +736,6 @@ ggplot(movie_data, aes(x = genre , y = log_intgross_2013, fill = genre)) +
 
 ```{r, message=FALSE, results='hide'}
 vif(log_lm_model)
-```
-
-Cook’s Distance was evaluated to detect any extreme values in the data. As a result, a 4 points were identified as having a significant impact on the model’s decisions. After refitting the model without these influential points, an improvement of approximately 1% was observed in the adjusted R-squared metric. Consequently, it was concluded that removing these observations from the dataset was not appropriate. Additionally, multicollinearity among the variables was assessed, and the Variance Inflation Factor (VIF) scores for all variables were found to be very close to 1, indicating the absence of multicollinearity issues in the final model.
-
-**Figure 4:** Cook's Distance
-
-```{r, message = FALSE}
-cooks_distances <- cooks.distance(log_lm_model)
-n <- nrow(movie_data)
-threshold <- 40/n
-influential_points <- which(cooks_distances > threshold)
-
-plot(cooks_distances, type = "h", main = "", 
-     ylab = "Cook's Distance", xlab = "Index")
-
-abline(h = threshold, col = "red", lty = 2)
-
-influential_indices <- which(cooks_distances > threshold)
-points(influential_indices, cooks_distances[influential_indices], col = "red", pch = 19)
-
-
-```
-
-```{r, results='hide', message=FALSE}
-# Log model without outliers
-
-movie_data_no_influential <- movie_data[-influential_points, ]
-mod_reduced_without_extreme <- lm(log_intgross_2013 ~ binary + genre + log_budget_2013 + decade_code, data = movie_data_no_influential)
-summary(mod_reduced_without_extreme)
-summary(mod_reduced)
 ```
 
 **5. Conclusion**
