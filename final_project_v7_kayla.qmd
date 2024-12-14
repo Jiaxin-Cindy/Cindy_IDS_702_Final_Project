@@ -266,13 +266,9 @@ knitr::kable(
 
 ```
 
-```{r}
-
-```
-
 **4.2 Research Question 1: Relationship Between the Bechdel Test and Budget**
 
-Across most decades, there is a negative relationship between movie budget and the predicted probability of passing the Bechdel Test, indicating that higher-budget films are generally less likely to pass. The results of the logistic regression model are shown in tables 2 and 3 below:
+Across most decades, there is a negative relationship between movie budget and the predicted probability of passing the Bechdel Test, indicating that higher-budget films are generally less likely to pass. The results of the logistic regression model are shown in tables 2 below:
 
 ```{r, fig.show='hide'}
 # Updated Per Andrea's feedback
