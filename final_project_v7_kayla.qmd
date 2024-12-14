@@ -319,7 +319,7 @@ head(movie_data)
 
 ```
 
-```{r, message=FALSE, fig.show='hide',results='hide'}\}
+```{r, message=FALSE, fig.show='hide',results='hide'}
 # testing a couple of different combinations of models here to ensure the variables we selected is the best combo, based on AIC
 # we are determining what variables we may want to include in the model in addition to those we are interested in in the research question
 
@@ -352,7 +352,7 @@ AIC(mod_test_8)
 vif(mod_test_3)
 ```
 
-```{r}
+```{r,message=FALSE, fig.show='hide',results='hide'}
 # we want to ensure that international revenue is inclusive of domestic revenue
 # Filter rows where domestic revenue is greater than international revenue
 greater_domestic_revenue <- movie_data[movie_data$domgross_2013 > movie_data$intgross_2013, ]
@@ -369,18 +369,15 @@ head(movie_data)
 # through researching a couple of sample movies it is clear that international revenue includes domestic
 ```
 
-```{r}
+```{r,message=FALSE, fig.show='hide',results='hide'}
 # Construct the logistic regression model
 glm_model <- glm(binary ~ budget_2013 + decade_code + genre + intgross_2013, data = movie_data, family = "binomial")
 
 # Summary of the model
 summary(glm_model)
-plot(glm_model)
 ```
 
 ```{r}
-
-
 # Extract the model summary
 glm_summary <- summary(glm_model)
 # Create the data frame for the table
@@ -418,7 +415,7 @@ knitr::kable(
 
 In order to select which variables to include in this model in addition to the variables of interest from our research question, the AIC value of models with varied combinations of variables were calculated. The model with the lowest AIC value was that which included genre, domestic revenue and international revenue. AIC punishes the inclusion of additional predictors, so we felt this was an accurate way for us to select the best model. However, examining VIF values revealed high multicollinearity between domestic and international revenue, which we concluded was due to international revenue including domestic; therefore we included only international revenue in the final model.
 
-The logistic regression analysis reveals key factors influencing the likelihood of a film passing the Bechdel Test. Budget is a significant predictor, with higher budgets decreasing the odds of passing the test (p \< 0.001), suggesting that more expensive films may prioritize traditional narratives less aligned with diversity benchmarks. Decade effects are notable, with films from the 1990s, 2000s, and 2010s significantly more likely to pass the Bechdel Test compared to the baseline (likely pre-1980s), highlighting a positive trend in gender representation over time. Genre plays a critical role, as action films are significantly less likely to pass (p \< 0.001), whereas horror films are more likely to do so (p = 0.002). Drama and "Other" genres show no significant difference from the baseline genre. Interestingly, domestic revenue negatively correlates with passing the test (p = 0.027), while international revenue positively correlates (p = 0.022), indicating that films with inclusive narratives may perform better in global markets. These findings emphasize the influence of budget, genre, and temporal trends on gender representation in cinema, with international audiences appearing to reward inclusivity.
+The logistic regression results indicate several significant predictors of a film's likelihood of passing the Bechdel Test. Budget remains a key factor, with higher budgets significantly decreasing the odds of passing the test (p = 0.003), suggesting that higher-budget productions may focus on traditional narratives that do not prioritize gender inclusivity. Decade effects are strongly significant for the 1990s (p = 0.002), 2000s (p \< 0.001), and 2010s (p \< 0.001), where films released in these decades are increasingly more likely to pass the Bechdel Test compared to earlier periods. Genre also has a notable influence, as action films are significantly less likely to pass (p \< 0.001), while horror films are significantly more likely to do so (p = 0.002). Drama and "Other" genres do not show statistically significant differences. Interestingly, international revenue (intgross 2013) does not have a significant effect (p = 0.552) in this model, in contrast to previous expectations. These findings underscore the continued influence of production budgets, temporal trends, and genre preferences on gender representation in cinema. The strong decade effects suggest that progress has been made in recent decades toward more inclusive storytelling.
 
 ```{r, results ='hide'}
 # Create the confusion matrix:
@@ -443,12 +440,10 @@ Table 3: Confusion Matrix
 
 | Prediction/Reference | FAIL | PASS |
 |----------------------|------|------|
-| **FAIL**             | 636  | 324  |
-| **PASS**             | 346  | 470  |
+| **FAIL**             | 627  | 316  |
+| **PASS**             | 355  | 478  |
 
-Statistically significant predictors include the **Action genre** (negative effect), **Horror genre** (positive effect), **domestic gross** (negative effect), and **international gross** (positive effect). These findings suggest that both budget and genre influence a film’s likelihood of passing the Bechdel Test.
-
-Model performance metrics underscored its moderate ability to classify passing and failing films. The balanced accuracy of the model was 61.98%, reflecting an average of sensitivity (64.77%) and specificity (59.19%). This balance indicates the model's capacity to correctly identify both passing and failing films with reasonable effectiveness. The kappa statistic was 0.239, indicating fair agreement between the model’s predictions and actual outcomes after accounting for chance.
+The logistic regression model performs moderately well, achieving an overall accuracy of 62.22% and a balanced accuracy of 62.03%. It demonstrates slightly better sensitivity (63.85%) than specificity (60.20%), suggesting it is marginally more effective at identifying films that fail the Bechdel Test. However, the low kappa statistic (0.2394) highlights that the model's predictive power is only fair after accounting for chance, indicating that the classification task may inherently be challenging given the available data.
 
 ```{r, fig.show='hide'}
 # Figure 1: Budget Distribution by Decade (2013, Millions USD)
@@ -471,7 +466,7 @@ ggplot(movie_data, aes(x = as.factor(decade_code), y = budget_2013 / 1e6, fill =
 
 ```
 
-Figure 1 reveals a consistent negative association between budget and the likelihood of passing the Bechdel Test across all decades. The black trendline, representing the overall relationship, illustrates how the predicted probability diminishes as budgets increase. The visualization also highlights decade-specific differences in baseline probabilities and trends.
+This figure illustrates the predicted probability of a film passing the Bechdel Test as a function of its production budget (adjusted to 2013 USD), stratified by decade. The black trendline indicates an overall negative relationship between budget and the likelihood of passing the Bechdel Test, with probabilities decreasing as budgets increase up to approximately \$300 million. This suggests that higher-budget films are less likely to prioritize gender-inclusive narratives. Interestingly, there is a slight upward trend in passing probability for the very highest-budget films, but the confidence interval (shaded region) is wide, indicating high uncertainty. Films from more recent decades (2000s and 2010s, shown in orange and yellow) generally have higher baseline probabilities of passing the test compared to earlier decades (e.g., 1970s and 1980s, shown in purple and blue), reflecting temporal improvements in gender representation. This temporal trend underscores the evolving priorities of the film industry toward inclusivity, though budget remains a constraining factor.
 
 **Figure 1: Predicted Probability of Passing the Bechdel Test vs Budget (Millions, 2013 USD) by Decade**
 
