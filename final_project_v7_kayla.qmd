@@ -466,8 +466,6 @@ ggplot(movie_data, aes(x = as.factor(decade_code), y = budget_2013 / 1e6, fill =
 
 ```
 
-This figure illustrates the predicted probability of a film passing the Bechdel Test as a function of its production budget (adjusted to 2013 USD), stratified by decade. The black trendline indicates an overall negative relationship between budget and the likelihood of passing the Bechdel Test, with probabilities decreasing as budgets increase up to approximately \$300 million. This suggests that higher-budget films are less likely to prioritize gender-inclusive narratives. Interestingly, there is a slight upward trend in passing probability for the very highest-budget films, but the confidence interval (shaded region) is wide, indicating high uncertainty. Films from more recent decades (2000s and 2010s, shown in orange and yellow) generally have higher baseline probabilities of passing the test compared to earlier decades (e.g., 1970s and 1980s, shown in purple and blue), reflecting temporal improvements in gender representation. This temporal trend underscores the evolving priorities of the film industry toward inclusivity, though budget remains a constraining factor.
-
 **Figure 1: Predicted Probability of Passing the Bechdel Test vs Budget (Millions, 2013 USD) by Decade**
 
 ```{r}
@@ -485,6 +483,8 @@ ggplot(movie_data, aes(x = budget_2013_millions, y = predicted_prob, color = dec
 
 
 ```
+
+Figure 1 illustrates the predicted probability of a film passing the Bechdel Test as a function of its production budget (adjusted to 2013 USD), stratified by decade. The black trendline indicates an overall negative relationship between budget and the likelihood of passing the Bechdel Test, with probabilities decreasing as budgets increase up to approximately \$300 million. This suggests that higher-budget films are less likely to prioritize gender-inclusive narratives. Interestingly, there is a slight upward trend in passing probability for the very highest-budget films, but the confidence interval (shaded region) is wide, indicating high uncertainty. Films from more recent decades (2000s and 2010s, shown in orange and yellow) generally have higher baseline probabilities of passing the test compared to earlier decades (e.g., 1970s and 1980s, shown in purple and blue), reflecting temporal improvements in gender representation. This temporal trend underscores the evolving priorities of the film industry toward inclusivity, though budget remains a constraining factor.
 
 **4.3 Research Question 2: Bechdel Test, Genre, and the International Box Office**
 
